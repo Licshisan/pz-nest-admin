@@ -20,13 +20,20 @@ import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard'
 import { RbacGuard } from './modules/auth/guards/rbac.guard'
 import { HealthModule } from './modules/health/health.module'
 import { NetdiskModule } from './modules/netdisk/netdisk.module'
+import { PzAdvisorModule } from './modules/pz-advisor/pz-advisor.module'
+import { PzBookingModule } from './modules/pz-booking/pz-booking.module'
+import { PzPatientModule } from './modules/pz-patient/pz-patient.module'
+import { PzReviewModule } from './modules/pz-review/pz-review.module'
+import { PzScheduleModule } from './modules/pz-schedule/pz-schedule.module'
+import { PzUserModule } from './modules/pz-user/pz-user.module'
+
 import { SseModule } from './modules/sse/sse.module'
+
 import { SystemModule } from './modules/system/system.module'
 import { TasksModule } from './modules/tasks/tasks.module'
 import { TodoModule } from './modules/todo/todo.module'
 import { ToolsModule } from './modules/tools/tools.module'
 import { DatabaseModule } from './shared/database/database.module'
-
 import { SocketModule } from './socket/socket.module'
 
 @Module({
@@ -66,7 +73,12 @@ import { SocketModule } from './socket/socket.module'
     NetdiskModule,
 
     // biz
-
+    PzUserModule,
+    PzAdvisorModule,
+    PzBookingModule,
+    PzPatientModule,
+    PzReviewModule,
+    PzScheduleModule,
     // end biz
 
     TodoModule,

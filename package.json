@@ -32,6 +32,7 @@
     "typeorm": "cross-env NODE_ENV=development typeorm-ts-node-esm -d ./dist/config/database.config.js",
     "migration:create": "npm run typeorm migration:create ./src/migrations/initData",
     "migration:generate": "npm run typeorm migration:generate ./src/migrations/update-table_$(echo $npm_package_version | sed 's/\\./_/g')",
+    "migration:generate_win": "npm run typeorm migration:generate ./src/migrations/update-table_%date:~0,4%%date:~5,2%%date:~8,2%_%time:~0,2%%time:~3,2%%time:~6,2%",
     "migration:run": "npm run typeorm -- migration:run",
     "migration:revert": "npm run typeorm -- migration:revert",
     "cleanlog": "rimraf logs",
