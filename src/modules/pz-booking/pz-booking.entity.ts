@@ -36,7 +36,7 @@ export class PzBookingEntity extends CommonEntity {
   @Column({ type: 'int', name: 'user_id', comment: '用户ID' })
   userId: number
 
-  @Column({ type: 'int', name: 'advisor_id', comment: '陪诊师ID' })
+  @Column({ type: 'int', name: 'advisor_id', nullable: true, comment: '陪诊师ID' })
   advisorId: number
 
   @Column({ length: 64, name: 'patient_name', comment: '就诊人姓名' })

@@ -12,7 +12,7 @@ export class PzReviewEntity extends CommonEntity {
   @Column({ type: 'int', name: 'user_id', comment: '用户ID' })
   userId: number
 
-  @Column({ type: 'int', name: 'advisor_id', comment: '陪诊师ID' })
+  @Column({ type: 'int', name: 'advisor_id', nullable: true, comment: '陪诊师ID' })
   advisorId: number
 
   @Column({ type: 'tinyint', comment: '评分 1-5' })

@@ -22,9 +22,7 @@ import { HealthModule } from './modules/health/health.module'
 import { NetdiskModule } from './modules/netdisk/netdisk.module'
 import { PzAdvisorModule } from './modules/pz-advisor/pz-advisor.module'
 import { PzBookingModule } from './modules/pz-booking/pz-booking.module'
-import { PzPatientModule } from './modules/pz-patient/pz-patient.module'
 import { PzReviewModule } from './modules/pz-review/pz-review.module'
-import { PzScheduleModule } from './modules/pz-schedule/pz-schedule.module'
 import { PzUserModule } from './modules/pz-user/pz-user.module'
 
 import { SseModule } from './modules/sse/sse.module'
@@ -76,9 +74,7 @@ import { SocketModule } from './socket/socket.module'
     PzUserModule,
     PzAdvisorModule,
     PzBookingModule,
-    PzPatientModule,
     PzReviewModule,
-    PzScheduleModule,
     // end biz
 
     TodoModule,
