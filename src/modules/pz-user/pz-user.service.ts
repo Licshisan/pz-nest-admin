@@ -1,9 +1,11 @@
-import { Injectable } from '@nestjs/common'
+import { HttpService } from '@nestjs/axios'
+import { Inject, Injectable } from '@nestjs/common'
 import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm'
 import { isEmpty, isNil } from 'lodash'
 import { EntityManager, Like, Repository } from 'typeorm'
 
 import { BusinessException } from '~/common/exceptions/biz.exception'
+import { ISecurityConfig, IWechatConfig, SecurityConfig, WechatConfig } from '~/config'
 import { ErrorEnum } from '~/constants/error-code.constant'
 import { paginate } from '~/helper/paginate'
 import { Pagination } from '~/helper/paginate/pagination'
@@ -17,6 +19,9 @@ export class PzUserService {
     @InjectRepository(PzUserEntity)
     private readonly pzUserRepository: Repository<PzUserEntity>,
     @InjectEntityManager() private entityManager: EntityManager,
+    private http: HttpService,
+    @Inject(SecurityConfig.KEY) private securityConfig: ISecurityConfig,
+    @Inject(WechatConfig.KEY) private wechatConfig: IWechatConfig,
   ) {}
 
   /**
@@ -58,7 +63,7 @@ export class PzUserService {
    * 微信登录 - 创建或更新用户
    * 返回用户信息和是否新用户
    */
-  async wechatLogin(openid: string, unionid?: string, userInfo?: { nickname?: string, avatar?: string }): Promise<{ user: PzUserEntity, isNew: boolean }> {
+  async wechatLogin(openid: string, userInfo?: { nickname?: string, avatar?: string }): Promise<PzUserEntity> {
     let user = await this.findUserByOpenid(openid)
 
     if (isEmpty(user)) {
@@ -66,7 +71,6 @@ export class PzUserService {
       user = await this.entityManager.transaction(async (manager) => {
         const newUser = manager.create(PzUserEntity, {
           openid,
-          unionid,
           nickname: userInfo?.nickname,
           avatar: userInfo?.avatar,
           status: 1,
@@ -75,7 +79,7 @@ export class PzUserService {
         return manager.save(newUser)
       })
 
-      return { user, isNew: true }
+      return user
     }
 
     // 老用户，更新用户信息
@@ -88,15 +92,7 @@ export class PzUserService {
       user = await this.info(user.id)
     }
 
-    return { user, isNew: false }
-  }
-
-  /**
-   * 更新用户手机号
-   */
-  async updatePhone(id: number, phone: string): Promise<void> {
-    const user = await this.info(id)
-    await this.pzUserRepository.update(id, { phone })
+    return user
   }
 
   /**
@@ -162,5 +158,43 @@ export class PzUserService {
       page,
       pageSize,
     })
+  }
+
+  /**
+   * 微信小程序登录 - 获取用户 openid
+   */
+  async code2Session(code: string): Promise<{ openid: string, sessionKey: string }> {
+    const { miniAppId, miniAppSecret } = this.wechatConfig
+
+    const url = 'https://api.weixin.qq.com/sns/jscode2session'
+    const params = {
+      appid: miniAppId,
+      secret: miniAppSecret,
+      js_code: code,
+      grant_type: 'authorization_code',
+    }
+
+    try {
+      const { data } = await this.http.axiosRef.get(url, { params })
+
+      if (data.errcode) {
+        throw new BusinessException(`微信接口错误: ${data.errmsg || data.errcode}`)
+      }
+
+      if (!data.openid) {
+        throw new BusinessException('微信登录失败，未获取到 openid')
+      }
+
+      return {
+        openid: data.openid,
+        sessionKey: data.session_key,
+      }
+    }
+    catch (error: any) {
+      if (error instanceof BusinessException) {
+        throw error
+      }
+      throw new BusinessException(`微信登录请求失败: ${error.message}`)
+    }
   }
 }

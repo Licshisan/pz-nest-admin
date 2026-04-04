@@ -7,10 +7,6 @@ export class PzUserEntity extends CommonEntity {
   @Column({ unique: true })
   openid: string
 
-  // 微信开放平台 unionid（多端共用，可空）
-  @Column({ nullable: true })
-  unionid: string
-
   // 微信昵称
   @Column({ nullable: true })
   nickname: string

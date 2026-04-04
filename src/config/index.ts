@@ -5,6 +5,7 @@ import { IOssConfig, OssConfig, ossRegToken } from './oss.config'
 import { IRedisConfig, RedisConfig, redisRegToken } from './redis.config'
 import { ISecurityConfig, SecurityConfig, securityRegToken } from './security.config'
 import { ISwaggerConfig, SwaggerConfig, swaggerRegToken } from './swagger.config'
+import { IWechatConfig, WechatConfig, wechatRegToken } from './wechat.config'
 
 export * from './app.config'
 export * from './database.config'
@@ -13,6 +14,7 @@ export * from './oss.config'
 export * from './redis.config'
 export * from './security.config'
 export * from './swagger.config'
+export * from './wechat.config'
 
 export interface AllConfigType {
   [appRegToken]: IAppConfig
@@ -22,6 +24,7 @@ export interface AllConfigType {
   [securityRegToken]: ISecurityConfig
   [swaggerRegToken]: ISwaggerConfig
   [ossRegToken]: IOssConfig
+  [wechatRegToken]: IWechatConfig
 }
 
 export type ConfigKeyPaths = RecordNamePaths<AllConfigType>
@@ -34,4 +37,5 @@ export default {
   RedisConfig,
   SecurityConfig,
   SwaggerConfig,
+  WechatConfig,
 }
