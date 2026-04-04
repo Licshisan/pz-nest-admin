@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger'
-import { IsArray, IsDecimal, IsIn, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator'
+import { IsArray, IsIn, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator'
 
 // 查询 DTO
 export class PzAdvisorQueryDto {
@@ -65,12 +65,12 @@ export class PzAdvisorDto {
 
   @ApiPropertyOptional({ description: '半天价格', example: 299.0 })
   @IsOptional()
-  @IsDecimal()
+  @IsNumber()
   priceHalf?: number
 
   @ApiPropertyOptional({ description: '全天价格', example: 499.0 })
   @IsOptional()
-  @IsDecimal()
+  @IsNumber()
   priceFull?: number
 }
 
@@ -88,7 +88,7 @@ export class PzAdvisorUpdateDto extends PzAdvisorDto {
 
   @ApiPropertyOptional({ description: '评分', example: 5.0 })
   @IsOptional()
-  @IsDecimal()
+  @IsNumber()
   @Min(0)
   @Max(5)
   rate?: number
