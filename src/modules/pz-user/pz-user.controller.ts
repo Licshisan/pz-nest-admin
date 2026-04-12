@@ -19,7 +19,6 @@ export const permissions = definePermission('peizhen:user', {
   DELETE: 'delete',
 } as const)
 
-@Public()
 @ApiTags('Peizhen - 微信用户模块')
 @Controller('peizhen/users')
 export class PzUserController {
@@ -27,15 +26,16 @@ export class PzUserController {
     private pzUserService: PzUserService,
   ) {}
 
+  // 小程序接口
   @Post('wechat-login')
   @ApiOperation({ summary: '微信小程序静默登录' })
   @ApiResult({ type: PzUserEntity })
+  @Public()
   async wechatLogin(@Body() dto: WechatLoginDto) {
-    const { openid } = await this.pzUserService.code2Session(dto.code)
-    const user = await this.pzUserService.wechatLogin(openid)
-    return user
+    return this.pzUserService.wechatLogin(dto)
   }
 
+  // 管理端接口
   @Get()
   @ApiOperation({ summary: '获取微信用户列表' })
   @ApiResult({ type: [PzUserEntity], isPage: true })

@@ -24,14 +24,7 @@ export const permissions = definePermission('peizhen:advisor', {
 export class PzAdvisorController {
   constructor(private pzAdvisorService: PzAdvisorService) {}
 
-  @Get()
-  @ApiOperation({ summary: '获取陪诊师列表' })
-  @ApiResult({ type: [PzAdvisorEntity], isPage: true })
-  @Perm(permissions.LIST)
-  async list(@Query() dto: PzAdvisorQueryDto) {
-    return this.pzAdvisorService.list(dto)
-  }
-
+  // 小程序接口
   @Get('available')
   @ApiOperation({ summary: '获取可预约的陪诊师列表' })
   @ApiResult({ type: [PzAdvisorEntity] })
@@ -40,10 +33,27 @@ export class PzAdvisorController {
     return this.pzAdvisorService.getAvailableAdvisors()
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: '查询陪诊师详情' })
+  @Get('info/:id')
+  @ApiOperation({ summary: '小程序 - 查询陪诊师详情' })
   @ApiResult({ type: PzAdvisorEntity })
   @Public()
+  async info(@IdParam() id: number) {
+    return this.pzAdvisorService.info(id)
+  }
+
+  // 管理端接口
+  @Get()
+  @ApiOperation({ summary: '获取陪诊师列表' })
+  @ApiResult({ type: [PzAdvisorEntity], isPage: true })
+  @Perm(permissions.LIST)
+  async list(@Query() dto: PzAdvisorQueryDto) {
+    return this.pzAdvisorService.list(dto)
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: '管理端 - 查询陪诊师详情' })
+  @ApiResult({ type: PzAdvisorEntity })
+  @Perm(permissions.READ)
   async read(@IdParam() id: number) {
     return this.pzAdvisorService.info(id)
   }

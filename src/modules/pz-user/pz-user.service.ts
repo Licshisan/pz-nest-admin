@@ -25,6 +25,45 @@ export class PzUserService {
   ) {}
 
   /**
+   * 微信登录 - 创建或更新用户
+   * 返回用户信息和是否新用户
+   */
+  async wechatLogin(dto: { code: string }, userInfo?: { nickname?: string, avatar?: string }): Promise<PzUserEntity> {
+    // 通过 code 获取 openid
+    const { openid } = await this.code2Session(dto.code)
+
+    let user = await this.findUserByOpenid(openid)
+
+    if (isEmpty(user)) {
+      // 新用户，创建用户
+      user = await this.entityManager.transaction(async (manager) => {
+        const newUser = manager.create(PzUserEntity, {
+          openid,
+          nickname: userInfo?.nickname,
+          avatar: userInfo?.avatar,
+          status: 1,
+        })
+
+        return manager.save(newUser)
+      })
+
+      return user
+    }
+
+    // 老用户，更新用户信息
+    if (userInfo) {
+      await this.pzUserRepository.update(user.id, {
+        nickname: userInfo.nickname,
+        avatar: userInfo.avatar,
+        lastLoginTime: new Date(),
+      })
+      user = await this.info(user.id)
+    }
+
+    return user
+  }
+
+  /**
    * 根据OpenID查找微信用户
    */
   async findUserByOpenid(openid: string): Promise<PzUserEntity | undefined> {
@@ -55,42 +94,6 @@ export class PzUserService {
 
     if (isEmpty(user))
       throw new BusinessException(ErrorEnum.USER_NOT_FOUND)
-
-    return user
-  }
-
-  /**
-   * 微信登录 - 创建或更新用户
-   * 返回用户信息和是否新用户
-   */
-  async wechatLogin(openid: string, userInfo?: { nickname?: string, avatar?: string }): Promise<PzUserEntity> {
-    let user = await this.findUserByOpenid(openid)
-
-    if (isEmpty(user)) {
-      // 新用户，创建用户
-      user = await this.entityManager.transaction(async (manager) => {
-        const newUser = manager.create(PzUserEntity, {
-          openid,
-          nickname: userInfo?.nickname,
-          avatar: userInfo?.avatar,
-          status: 1,
-        })
-
-        return manager.save(newUser)
-      })
-
-      return user
-    }
-
-    // 老用户，更新用户信息
-    if (userInfo) {
-      await this.pzUserRepository.update(user.id, {
-        nickname: userInfo.nickname,
-        avatar: userInfo.avatar,
-        lastLoginTime: new Date(),
-      })
-      user = await this.info(user.id)
-    }
 
     return user
   }
