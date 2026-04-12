@@ -48,6 +48,21 @@ export class PzBookingService {
   }
 
   /**
+   * 根据订单号查询订单详情
+   */
+  async findByOrderNo(orderNo: string): Promise<PzBookingEntity> {
+    const booking = await this.pzBookingRepository.findOne({
+      where: { orderNo },
+      relations: ['user', 'advisor'],
+    })
+
+    if (isEmpty(booking))
+      throw new BusinessException(ErrorEnum.USER_NOT_FOUND)
+
+    return booking
+  }
+
+  /**
    * 获取订单列表
    */
   async list(dto: PzBookingQueryDto): Promise<Pagination<PzBookingEntity>> {

@@ -41,6 +41,14 @@ export class PzBookingController {
     return this.pzBookingService.getUserBookings(userId, status)
   }
 
+  @Get('order-no/:orderNo')
+  @ApiOperation({ summary: '根据订单号查询订单详情（小程序专用）' })
+  @ApiResult({ type: PzBookingEntity })
+  @Public()
+  async findByOrderNo(@Param('orderNo') orderNo: string) {
+    return this.pzBookingService.findByOrderNo(orderNo)
+  }
+
   @Get(':id')
   @ApiOperation({ summary: '查询订单详情' })
   @ApiResult({ type: PzBookingEntity })
