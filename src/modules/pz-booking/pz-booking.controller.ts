@@ -7,7 +7,7 @@ import { IdParam } from '~/common/decorators/id-param.decorator'
 import { definePermission, Perm } from '../auth/decorators/permission.decorator'
 
 import { Public } from '../auth/decorators/public.decorator'
-import { PzBookingCancelDto, PzBookingCreateDto, PzBookingQueryDto, PzBookingUpdateStatusDto } from './dto/pz-booking.dto'
+import { PzBookingCancelDto, PzBookingCreateDto, PzBookingQueryDto, PzBookingSubmitDto, PzBookingUpdateStatusDto } from './dto/pz-booking.dto'
 import { PzBookingEntity } from './pz-booking.entity'
 import { PzBookingService } from './pz-booking.service'
 
@@ -56,6 +56,14 @@ export class PzBookingController {
   async create(@Body() dto: PzBookingCreateDto, @Req() req?) {
     const userId = req?.user?.id || 1 // TODO: 从JWT获取用户ID
     return this.pzBookingService.create(userId, dto)
+  }
+
+  @Post('submit')
+  @ApiOperation({ summary: '提交陪诊订单（小程序专用）' })
+  @ApiResult({ type: PzBookingEntity })
+  @Public()
+  async submit(@Body() dto: PzBookingSubmitDto) {
+    return this.pzBookingService.submit(dto)
   }
 
   @Put(':id/status')

@@ -115,3 +115,66 @@ export class PzBookingCancelDto {
   @IsString()
   cancelReason: string
 }
+
+// 小程序提交陪诊订单 DTO
+export class PzBookingSubmitDto {
+  @ApiPropertyOptional({ description: '用户ID（小程序登录后获得）' })
+  @IsNumber()
+  userId: number
+
+  @ApiPropertyOptional({ description: '陪诊师ID' })
+  @IsNumber()
+  advisorId: number
+
+  @ApiPropertyOptional({ description: '就诊人姓名' })
+  @IsString()
+  patientName: string
+
+  @ApiPropertyOptional({ description: '就诊人性别 1男 2女' })
+  @IsNumber()
+  @IsIn([1, 2])
+  patientGender: number
+
+  @ApiPropertyOptional({ description: '就诊人年龄' })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(150)
+  patientAge?: number
+
+  @ApiPropertyOptional({ description: '就诊人手机号' })
+  @IsString()
+  patientPhone: string
+
+  @ApiPropertyOptional({ description: '就诊人身份证' })
+  @IsOptional()
+  @IsString()
+  patientIdCard?: string
+
+  @ApiPropertyOptional({ description: '服务类型 1全程陪诊 2代办跑腿 3就医指导' })
+  @IsNumber()
+  @IsIn([1, 2, 3])
+  serviceType: number
+
+  @ApiPropertyOptional({ description: '服务时段 1上午 2下午 3晚上' })
+  @IsNumber()
+  @IsIn([1, 2, 3])
+  servicePeriod: number
+
+  @ApiPropertyOptional({ description: '服务日期' })
+  @IsDateString()
+  serviceDate: string
+
+  @ApiPropertyOptional({ description: '服务时间点' })
+  @IsString()
+  serviceTime: string
+
+  @ApiPropertyOptional({ description: '就诊地址' })
+  @IsString()
+  serviceAddress: string
+
+  @ApiPropertyOptional({ description: '陪诊需求描述' })
+  @IsOptional()
+  @IsString()
+  requirement?: string
+}

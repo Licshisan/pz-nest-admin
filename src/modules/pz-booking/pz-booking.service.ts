@@ -9,7 +9,8 @@ import { paginate } from '~/helper/paginate'
 import { Pagination } from '~/helper/paginate/pagination'
 
 import { PzAdvisorService } from '../pz-advisor/pz-advisor.service'
-import { PzBookingCancelDto, PzBookingCreateDto, PzBookingQueryDto, PzBookingUpdateStatusDto } from './dto/pz-booking.dto'
+import { PzUserService } from '../pz-user/pz-user.service'
+import { PzBookingCancelDto, PzBookingCreateDto, PzBookingQueryDto, PzBookingSubmitDto, PzBookingUpdateStatusDto } from './dto/pz-booking.dto'
 import { BookingStatus, PzBookingEntity } from './pz-booking.entity'
 
 @Injectable()
@@ -19,6 +20,7 @@ export class PzBookingService {
     private readonly pzBookingRepository: Repository<PzBookingEntity>,
     @InjectEntityManager() private entityManager: EntityManager,
     private pzAdvisorService: PzAdvisorService,
+    private pzUserService: PzUserService,
   ) {}
 
   /**
@@ -104,6 +106,45 @@ export class PzBookingService {
         serviceDate: new Date(dto.serviceDate),
         price,
         status: BookingStatus.PENDING_PAY, // 待支付
+      })
+
+      return manager.save(newBooking)
+    })
+
+    return booking
+  }
+
+  /**
+   * 小程序提交陪诊订单
+   */
+  async submit(dto: PzBookingSubmitDto) {
+    // 验证用户存在
+    await this.pzUserService.info(dto.userId)
+
+    const advisor = await this.pzAdvisorService.info(dto.advisorId)
+
+    const price = dto.servicePeriod === 1 || dto.servicePeriod === 2
+      ? advisor.priceHalf
+      : advisor.priceFull
+
+    const booking = await this.entityManager.transaction(async (manager) => {
+      const newBooking = manager.create(PzBookingEntity, {
+        orderNo: this.generateOrderNo(),
+        userId: dto.userId,
+        advisorId: dto.advisorId,
+        patientName: dto.patientName,
+        patientGender: dto.patientGender,
+        patientAge: dto.patientAge,
+        patientPhone: dto.patientPhone,
+        patientIdCard: dto.patientIdCard,
+        serviceType: dto.serviceType,
+        servicePeriod: dto.servicePeriod,
+        serviceDate: new Date(dto.serviceDate),
+        serviceTime: dto.serviceTime,
+        serviceAddress: dto.serviceAddress,
+        requirement: dto.requirement,
+        price,
+        status: BookingStatus.PENDING_PAY,
       })
 
       return manager.save(newBooking)
