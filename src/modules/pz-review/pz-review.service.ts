@@ -9,6 +9,7 @@ import { paginate } from '~/helper/paginate'
 import { Pagination } from '~/helper/paginate/pagination'
 
 import { PzAdvisorService } from '../pz-advisor/pz-advisor.service'
+import { BookingStatus } from '../pz-booking/pz-booking.entity'
 import { PzBookingService } from '../pz-booking/pz-booking.service'
 import { PzReviewDto, PzReviewQueryDto } from './dto/pz-review.dto'
 import { PzReviewEntity } from './pz-review.entity'
@@ -87,7 +88,7 @@ export class PzReviewService {
     }
 
     // 验证订单是否已完成
-    if (booking.status !== 4) {
+    if (booking.status !== BookingStatus.COMPLETED) {
       throw new BusinessException('只有已完成的订单才能评价')
     }
 

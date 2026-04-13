@@ -11,7 +11,7 @@ import { Pagination } from '~/helper/paginate/pagination'
 import { PzAdvisorService } from '../pz-advisor/pz-advisor.service'
 import { PzUserService } from '../pz-user/pz-user.service'
 import { PzBookingCancelDto, PzBookingCreateDto, PzBookingQueryDto, PzBookingSubmitDto, PzBookingUpdateStatusDto } from './dto/pz-booking.dto'
-import { BookingStatus, PzBookingEntity, ServicePeriod } from './pz-booking.entity'
+import { BookingStatus, PzBookingEntity, ServicePeriod, ServiceType } from './pz-booking.entity'
 
 @Injectable()
 export class PzBookingService {
@@ -102,16 +102,55 @@ export class PzBookingService {
   }
 
   /**
+   * 根据服务类型、时段、时长计算价格
+   */
+  private calculatePrice(serviceType: ServiceType, servicePeriod: ServicePeriod, duration?: number): number {
+    const isNight = servicePeriod === ServicePeriod.NIGHT_AM || servicePeriod === ServicePeriod.NIGHT_PM
+    const isMorningOrAfternoon = servicePeriod === ServicePeriod.MORNING || servicePeriod === ServicePeriod.AFTERNOON
+
+    // 绿色通道（固定）
+    if (serviceType === ServiceType.GUIDANCE) {
+      return 500
+    }
+
+    // 代办跑腿/院内服务（固定）
+    if (serviceType === ServiceType.ERRAND) {
+      return 88
+    }
+
+    // 全程陪诊
+    if (serviceType === ServiceType.FULL_ACCOMPANY) {
+      // 加时服务
+      if (duration === 1) {
+        return isNight ? 150 : 70
+      }
+      // 夜间陪诊
+      if (isNight) {
+        if (duration === 2)
+          return 356
+        if (duration === 4)
+          return 576
+      }
+      // 日间陪诊
+      if (isMorningOrAfternoon) {
+        if (duration === 2)
+          return 178
+        if (duration === 4)
+          return 288
+        if (duration === 8)
+          return 520
+      }
+    }
+
+    // 默认值
+    return 178
+  }
+
+  /**
    * 创建订单
    */
   async create(userId: number, dto: PzBookingCreateDto): Promise<PzBookingEntity> {
-    // 获取陪诊师信息来确定价格
-    const advisor = await this.pzAdvisorService.info(dto.advisorId)
-
-    // 根据服务时段确定价格
-    const price = dto.servicePeriod === ServicePeriod.MORNING || dto.servicePeriod === ServicePeriod.AFTERNOON
-      ? advisor.priceHalf
-      : advisor.priceFull
+    const price = this.calculatePrice(dto.serviceType, dto.servicePeriod, dto.duration)
 
     const booking = await this.entityManager.transaction(async (manager) => {
       const newBooking = manager.create(PzBookingEntity, {
@@ -120,7 +159,7 @@ export class PzBookingService {
         ...dto,
         serviceDate: new Date(dto.serviceDate),
         price,
-        status: BookingStatus.PENDING_PAY, // 待支付
+        status: BookingStatus.PENDING_PAY,
       })
 
       return manager.save(newBooking)
@@ -136,11 +175,7 @@ export class PzBookingService {
     // 验证用户存在
     await this.pzUserService.info(dto.userId)
 
-    const advisor = await this.pzAdvisorService.info(dto.advisorId)
-
-    const price = dto.servicePeriod === ServicePeriod.MORNING || dto.servicePeriod === ServicePeriod.AFTERNOON
-      ? advisor.priceHalf
-      : advisor.priceFull
+    const price = this.calculatePrice(dto.serviceType, dto.servicePeriod, dto.duration)
 
     const booking = await this.entityManager.transaction(async (manager) => {
       const newBooking = manager.create(PzBookingEntity, {
@@ -154,6 +189,7 @@ export class PzBookingService {
         patientIdCard: dto.patientIdCard,
         serviceType: dto.serviceType,
         servicePeriod: dto.servicePeriod,
+        duration: dto.duration,
         serviceDate: new Date(dto.serviceDate),
         serviceTime: dto.serviceTime,
         serviceAddress: dto.serviceAddress,

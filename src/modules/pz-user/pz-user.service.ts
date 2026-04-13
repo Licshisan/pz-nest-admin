@@ -11,7 +11,7 @@ import { paginate } from '~/helper/paginate'
 import { Pagination } from '~/helper/paginate/pagination'
 
 import { PzUserDto, PzUserQueryDto, PzUserUpdateDto } from './dto/pz-user.dto'
-import { PzUserEntity } from './pz-user.entity'
+import { PzUserEntity, UserStatus } from './pz-user.entity'
 
 @Injectable()
 export class PzUserService {
@@ -41,7 +41,7 @@ export class PzUserService {
           openid,
           nickname: userInfo?.nickname,
           avatar: userInfo?.avatar,
-          status: 1,
+          status: UserStatus.ACTIVE,
         })
 
         return manager.save(newUser)
@@ -71,7 +71,7 @@ export class PzUserService {
       .createQueryBuilder('user')
       .where({
         openid,
-        status: 1,
+        status: UserStatus.ACTIVE,
       })
       .getOne()
   }

@@ -77,6 +77,11 @@ export class PzBookingCreateDto {
   @IsEnum(ServicePeriod)
   servicePeriod: ServicePeriod
 
+  @ApiPropertyOptional({ description: '服务时长（小时）1/2/4/8' })
+  @IsOptional()
+  @IsNumber()
+  duration?: number
+
   @ApiPropertyOptional({ description: '服务日期' })
   @IsDateString()
   serviceDate: string
@@ -155,6 +160,11 @@ export class PzBookingSubmitDto {
   @ApiPropertyOptional({ description: '服务时段', enum: ServicePeriod })
   @IsEnum(ServicePeriod)
   servicePeriod: ServicePeriod
+
+  @ApiPropertyOptional({ description: '服务时长（小时）1/2/4/8' })
+  @IsOptional()
+  @IsNumber()
+  duration?: number
 
   @ApiPropertyOptional({ description: '服务日期' })
   @IsDateString()

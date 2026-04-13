@@ -9,7 +9,7 @@ import { paginate } from '~/helper/paginate'
 import { Pagination } from '~/helper/paginate/pagination'
 
 import { PzAdvisorDto, PzAdvisorQueryDto, PzAdvisorUpdateDto } from './dto/pz-advisor.dto'
-import { PzAdvisorEntity } from './pz-advisor.entity'
+import { AdvisorStatus, AdvisorVerified, PzAdvisorEntity } from './pz-advisor.entity'
 
 @Injectable()
 export class PzAdvisorService {
@@ -59,8 +59,8 @@ export class PzAdvisorService {
   async getAvailableAdvisors(): Promise<PzAdvisorEntity[]> {
     return this.pzAdvisorRepository.find({
       where: {
-        status: 1,
-        isVerified: 1,
+        status: AdvisorStatus.ON_DUTY,
+        isVerified: AdvisorVerified.VERIFIED,
       },
       order: {
         rate: 'DESC',
@@ -76,8 +76,8 @@ export class PzAdvisorService {
     await this.entityManager.transaction(async (manager) => {
       const advisor = manager.create(PzAdvisorEntity, {
         ...dto,
-        status: 1,
-        isVerified: 0,
+        status: AdvisorStatus.ON_DUTY,
+        isVerified: AdvisorVerified.PENDING,
         rate: 5.0,
         serviceCount: 0,
       })
