@@ -1,5 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger'
-import { IsArray, IsIn, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator'
+import { IsArray, IsEnum, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator'
+
+import { AdvisorStatus, AdvisorVerified } from '../pz-advisor.entity'
 
 // 查询 DTO
 export class PzAdvisorQueryDto {
@@ -16,15 +18,15 @@ export class PzAdvisorQueryDto {
   @IsString()
   name?: string
 
-  @ApiPropertyOptional({ description: '状态 0休息 1在岗' })
+  @ApiPropertyOptional({ description: '状态', enum: AdvisorStatus })
   @IsOptional()
-  @IsIn([0, 1])
-  status?: number
+  @IsEnum(AdvisorStatus)
+  status?: AdvisorStatus
 
-  @ApiPropertyOptional({ description: '是否认证 0待审核 1已认证' })
+  @ApiPropertyOptional({ description: '认证状态', enum: AdvisorVerified })
   @IsOptional()
-  @IsIn([0, 1])
-  isVerified?: number
+  @IsEnum(AdvisorVerified)
+  isVerified?: AdvisorVerified
 }
 
 // 新增 DTO
@@ -76,15 +78,15 @@ export class PzAdvisorDto {
 
 // 更新 DTO
 export class PzAdvisorUpdateDto extends PzAdvisorDto {
-  @ApiPropertyOptional({ description: '状态 0休息 1在岗' })
+  @ApiPropertyOptional({ description: '状态', enum: AdvisorStatus })
   @IsOptional()
-  @IsIn([0, 1])
-  status?: number
+  @IsEnum(AdvisorStatus)
+  status?: AdvisorStatus
 
-  @ApiPropertyOptional({ description: '是否认证 0待审核 1已认证' })
+  @ApiPropertyOptional({ description: '认证状态', enum: AdvisorVerified })
   @IsOptional()
-  @IsIn([0, 1])
-  isVerified?: number
+  @IsEnum(AdvisorVerified)
+  isVerified?: AdvisorVerified
 
   @ApiPropertyOptional({ description: '评分', example: 5.0 })
   @IsOptional()

@@ -1,6 +1,18 @@
 import { Column, Entity } from 'typeorm'
 import { CommonEntity } from '~/common/entity/common.entity'
 
+// 陪诊师状态枚举
+export enum AdvisorStatus {
+  ON_DUTY = 'ON_DUTY', // 在岗
+  OFF_DUTY = 'OFF_DUTY', // 休息
+}
+
+// 陪诊师认证状态枚举
+export enum AdvisorVerified {
+  PENDING = 'PENDING', // 待审核
+  VERIFIED = 'VERIFIED', // 已认证
+}
+
 @Entity({ name: 'pz_advisor' })
 export class PzAdvisorEntity extends CommonEntity {
   @Column({ length: 64, comment: '陪诊师姓名' })
@@ -36,9 +48,9 @@ export class PzAdvisorEntity extends CommonEntity {
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 499.0, comment: '全天价格' })
   priceFull: number
 
-  @Column({ type: 'tinyint', default: 1, comment: '状态 1在岗 0休息' })
-  status: number
+  @Column({ type: 'enum', enum: AdvisorStatus, default: AdvisorStatus.ON_DUTY, comment: '状态' })
+  status: AdvisorStatus
 
-  @Column({ type: 'tinyint', default: 0, comment: '是否认证 0待审核 1已认证' })
-  isVerified: number
+  @Column({ type: 'enum', enum: AdvisorVerified, default: AdvisorVerified.PENDING, comment: '认证状态' })
+  isVerified: AdvisorVerified
 }

@@ -1,5 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger'
-import { IsDateString, IsIn, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator'
+import { IsDateString, IsEnum, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator'
+
+import { BookingStatus, PatientGender, ServicePeriod, ServiceType } from '../pz-booking.entity'
 
 // 查询 DTO
 export class PzBookingQueryDto {
@@ -21,10 +23,10 @@ export class PzBookingQueryDto {
   @IsNumber()
   advisorId?: number
 
-  @ApiPropertyOptional({ description: '订单状态 1待支付 2待接单 3服务中 4已完成 5已取消 6已退款' })
+  @ApiPropertyOptional({ description: '订单状态', enum: BookingStatus })
   @IsOptional()
-  @IsIn([1, 2, 3, 4, 5, 6])
-  status?: number
+  @IsEnum(BookingStatus)
+  status?: BookingStatus
 
   @ApiPropertyOptional({ description: '服务日期开始' })
   @IsOptional()
@@ -47,10 +49,9 @@ export class PzBookingCreateDto {
   @IsString()
   patientName: string
 
-  @ApiPropertyOptional({ description: '就诊人性别 1男 2女' })
-  @IsNumber()
-  @IsIn([1, 2])
-  patientGender: number
+  @ApiPropertyOptional({ description: '就诊人性别', enum: PatientGender })
+  @IsEnum(PatientGender)
+  patientGender: PatientGender
 
   @ApiPropertyOptional({ description: '就诊人年龄' })
   @IsOptional()
@@ -68,15 +69,13 @@ export class PzBookingCreateDto {
   @IsString()
   patientIdCard?: string
 
-  @ApiPropertyOptional({ description: '服务类型 1全程陪诊 2代办跑腿 3就医指导' })
-  @IsNumber()
-  @IsIn([1, 2, 3])
-  serviceType: number
+  @ApiPropertyOptional({ description: '服务类型', enum: ServiceType })
+  @IsEnum(ServiceType)
+  serviceType: ServiceType
 
-  @ApiPropertyOptional({ description: '服务时段 1上午 2下午 3晚上' })
-  @IsNumber()
-  @IsIn([1, 2, 3])
-  servicePeriod: number
+  @ApiPropertyOptional({ description: '服务时段', enum: ServicePeriod })
+  @IsEnum(ServicePeriod)
+  servicePeriod: ServicePeriod
 
   @ApiPropertyOptional({ description: '服务日期' })
   @IsDateString()
@@ -98,10 +97,9 @@ export class PzBookingCreateDto {
 
 // 更新订单状态 DTO
 export class PzBookingUpdateStatusDto {
-  @ApiPropertyOptional({ description: '订单状态' })
-  @IsNumber()
-  @IsIn([2, 3, 4, 5, 6])
-  status: number
+  @ApiPropertyOptional({ description: '订单状态', enum: BookingStatus })
+  @IsEnum(BookingStatus)
+  status: BookingStatus
 
   @ApiPropertyOptional({ description: '取消原因（取消订单时）' })
   @IsOptional()
@@ -130,10 +128,9 @@ export class PzBookingSubmitDto {
   @IsString()
   patientName: string
 
-  @ApiPropertyOptional({ description: '就诊人性别 1男 2女' })
-  @IsNumber()
-  @IsIn([1, 2])
-  patientGender: number
+  @ApiPropertyOptional({ description: '就诊人性别', enum: PatientGender })
+  @IsEnum(PatientGender)
+  patientGender: PatientGender
 
   @ApiPropertyOptional({ description: '就诊人年龄' })
   @IsOptional()
@@ -151,15 +148,13 @@ export class PzBookingSubmitDto {
   @IsString()
   patientIdCard?: string
 
-  @ApiPropertyOptional({ description: '服务类型 1全程陪诊 2代办跑腿 3就医指导' })
-  @IsNumber()
-  @IsIn([1, 2, 3])
-  serviceType: number
+  @ApiPropertyOptional({ description: '服务类型', enum: ServiceType })
+  @IsEnum(ServiceType)
+  serviceType: ServiceType
 
-  @ApiPropertyOptional({ description: '服务时段 1上午 2下午 3晚上' })
-  @IsNumber()
-  @IsIn([1, 2, 3])
-  servicePeriod: number
+  @ApiPropertyOptional({ description: '服务时段', enum: ServicePeriod })
+  @IsEnum(ServicePeriod)
+  servicePeriod: ServicePeriod
 
   @ApiPropertyOptional({ description: '服务日期' })
   @IsDateString()

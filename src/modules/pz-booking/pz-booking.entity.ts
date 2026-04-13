@@ -4,28 +4,36 @@ import { CommonEntity } from '~/common/entity/common.entity'
 import { PzAdvisorEntity } from '../pz-advisor/pz-advisor.entity'
 import { PzUserEntity } from '../pz-user/pz-user.entity'
 
+// 就诊人性别枚举
+export enum PatientGender {
+  MALE = 'MALE', // 男
+  FEMALE = 'FEMALE', // 女
+}
+
 // 订单状态枚举
 export enum BookingStatus {
-  PENDING_PAY = 1, // 待支付
-  PENDING_ACCEPT = 2, // 待接单
-  SERVICE_IN_PROGRESS = 3, // 服务中
-  COMPLETED = 4, // 已完成
-  CANCELLED = 5, // 已取消
-  REFUNDED = 6, // 已退款
+  PENDING_PAY = 'PENDING_PAY', // 待支付
+  PENDING_ACCEPT = 'PENDING_ACCEPT', // 待接单
+  SERVICE_IN_PROGRESS = 'SERVICE_IN_PROGRESS', // 服务中
+  COMPLETED = 'COMPLETED', // 已完成
+  CANCELLED = 'CANCELLED', // 已取消
+  REFUNDED = 'REFUNDED', // 已退款
 }
 
 // 服务类型枚举
 export enum ServiceType {
-  FULL_ACCOMPANY = 1, // 全程陪诊
-  ERRAND = 2, // 代办跑腿
-  GUIDANCE = 3, // 就医指导
+  FULL_ACCOMPANY = 'FULL_ACCOMPANY', // 全程陪诊
+  ERRAND = 'ERRAND', // 代办跑腿
+  GUIDANCE = 'GUIDANCE', // 就医指导
 }
 
 // 服务时段枚举
 export enum ServicePeriod {
-  MORNING = 1, // 上午
-  AFTERNOON = 2, // 下午
-  EVENING = 3, // 晚上
+  MORNING = 'MORNING', // 上午
+  AFTERNOON = 'AFTERNOON', // 下午
+  EVENING = 'EVENING', // 晚上
+  NIGHT_AM = 'NIGHT_AM', // 夜间上午
+  NIGHT_PM = 'NIGHT_PM', // 夜间下午
 }
 
 @Entity({ name: 'pz_booking' })
@@ -42,8 +50,8 @@ export class PzBookingEntity extends CommonEntity {
   @Column({ length: 64, name: 'patient_name', comment: '就诊人姓名' })
   patientName: string
 
-  @Column({ type: 'tinyint', name: 'patient_gender', comment: '就诊人性别 1男 2女' })
-  patientGender: number
+  @Column({ type: 'enum', enum: PatientGender, name: 'patient_gender', comment: '就诊人性别' })
+  patientGender: PatientGender
 
   @Column({ type: 'int', nullable: true, name: 'patient_age', comment: '就诊人年龄' })
   patientAge: number
@@ -54,11 +62,14 @@ export class PzBookingEntity extends CommonEntity {
   @Column({ length: 20, nullable: true, name: 'patient_id_card', comment: '就诊人身份证' })
   patientIdCard: string
 
-  @Column({ type: 'tinyint', name: 'service_type', comment: '服务类型 1全程陪诊 2代办跑腿 3就医指导' })
-  serviceType: number
+  @Column({ type: 'enum', enum: ServiceType, name: 'service_type', comment: '服务类型' })
+  serviceType: ServiceType
 
-  @Column({ type: 'tinyint', name: 'service_period', comment: '服务时段 1上午 2下午 3晚上' })
-  servicePeriod: number
+  @Column({ type: 'enum', enum: ServicePeriod, name: 'service_period', comment: '服务时段' })
+  servicePeriod: ServicePeriod
+
+  @Column({ type: 'int', name: 'duration', nullable: true, comment: '服务时长（小时）1/2/4/8' })
+  duration: number
 
   @Column({ type: 'date', name: 'service_date', comment: '服务日期' })
   serviceDate: Date
@@ -75,8 +86,8 @@ export class PzBookingEntity extends CommonEntity {
   @Column({ type: 'decimal', precision: 10, scale: 2, comment: '订单金额' })
   price: number
 
-  @Column({ type: 'tinyint', default: 1, comment: '订单状态 1待支付 2待接单 3服务中 4已完成 5已取消 6已退款' })
-  status: number
+  @Column({ type: 'enum', enum: BookingStatus, default: BookingStatus.PENDING_PAY, comment: '订单状态' })
+  status: BookingStatus
 
   @Column({ nullable: true, name: 'pay_time', comment: '支付时间' })
   payTime: Date

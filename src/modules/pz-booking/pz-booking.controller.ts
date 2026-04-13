@@ -8,7 +8,7 @@ import { definePermission, Perm } from '../auth/decorators/permission.decorator'
 
 import { Public } from '../auth/decorators/public.decorator'
 import { PzBookingCreateDto, PzBookingQueryDto, PzBookingSubmitDto, PzBookingUpdateStatusDto } from './dto/pz-booking.dto'
-import { PzBookingEntity } from './pz-booking.entity'
+import { BookingStatus, PzBookingEntity } from './pz-booking.entity'
 import { PzBookingService } from './pz-booking.service'
 
 export const permissions = definePermission('peizhen:booking', {
@@ -19,7 +19,7 @@ export const permissions = definePermission('peizhen:booking', {
   DELETE: 'delete',
 } as const)
 
-@ApiTags('陪诊订单')
+@ApiTags('Peizhen - 订单模块')
 @Controller('peizhen/bookings')
 export class PzBookingController {
   constructor(private pzBookingService: PzBookingService) {}
@@ -29,7 +29,7 @@ export class PzBookingController {
   @ApiOperation({ summary: '获取我的订单列表' })
   @ApiResult({ type: [PzBookingEntity] })
   @Public()
-  async getMyBookings(@Query('status') status?: number, @Req() req?) {
+  async getMyBookings(@Query('status') status?: BookingStatus, @Req() req?) {
     const userId = req?.user?.id || 1 // TODO: 从JWT获取用户ID
     return this.pzBookingService.getUserBookings(userId, status)
   }

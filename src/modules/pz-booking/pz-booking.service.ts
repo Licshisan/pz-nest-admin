@@ -11,7 +11,7 @@ import { Pagination } from '~/helper/paginate/pagination'
 import { PzAdvisorService } from '../pz-advisor/pz-advisor.service'
 import { PzUserService } from '../pz-user/pz-user.service'
 import { PzBookingCancelDto, PzBookingCreateDto, PzBookingQueryDto, PzBookingSubmitDto, PzBookingUpdateStatusDto } from './dto/pz-booking.dto'
-import { BookingStatus, PzBookingEntity } from './pz-booking.entity'
+import { BookingStatus, PzBookingEntity, ServicePeriod } from './pz-booking.entity'
 
 @Injectable()
 export class PzBookingService {
@@ -90,7 +90,7 @@ export class PzBookingService {
   /**
    * 获取用户的订单列表
    */
-  async getUserBookings(userId: number, status?: number): Promise<PzBookingEntity[]> {
+  async getUserBookings(userId: number, status?: BookingStatus): Promise<PzBookingEntity[]> {
     return this.pzBookingRepository.find({
       where: {
         userId,
@@ -109,7 +109,7 @@ export class PzBookingService {
     const advisor = await this.pzAdvisorService.info(dto.advisorId)
 
     // 根据服务时段确定价格
-    const price = dto.servicePeriod === 1 || dto.servicePeriod === 2
+    const price = dto.servicePeriod === ServicePeriod.MORNING || dto.servicePeriod === ServicePeriod.AFTERNOON
       ? advisor.priceHalf
       : advisor.priceFull
 
@@ -138,7 +138,7 @@ export class PzBookingService {
 
     const advisor = await this.pzAdvisorService.info(dto.advisorId)
 
-    const price = dto.servicePeriod === 1 || dto.servicePeriod === 2
+    const price = dto.servicePeriod === ServicePeriod.MORNING || dto.servicePeriod === ServicePeriod.AFTERNOON
       ? advisor.priceHalf
       : advisor.priceFull
 

@@ -1,5 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger'
-import { IsIn, IsOptional, IsString } from 'class-validator'
+import { IsEnum, IsOptional, IsString } from 'class-validator'
+
+import { UserGender, UserStatus } from '../pz-user.entity'
 
 // 微信登录 DTO
 export class WechatLoginDto {
@@ -38,10 +40,10 @@ export class PzUserQueryDto {
   @IsString()
   phone?: string
 
-  @ApiPropertyOptional({ description: '状态 0禁用 1正常' })
+  @ApiPropertyOptional({ description: '状态', enum: UserStatus })
   @IsOptional()
-  @IsIn([0, 1])
-  status?: number
+  @IsEnum(UserStatus)
+  status?: UserStatus
 }
 
 // 新增用户 DTO
@@ -75,10 +77,10 @@ export class PzUserDto {
   @IsString()
   realName?: string
 
-  @ApiPropertyOptional({ description: '性别 0未知 1男 2女' })
+  @ApiPropertyOptional({ description: '性别', enum: UserGender })
   @IsOptional()
-  @IsIn([0, 1, 2])
-  gender?: number
+  @IsEnum(UserGender)
+  gender?: UserGender
 
   @ApiPropertyOptional({ description: '生日' })
   @IsOptional()
@@ -92,8 +94,8 @@ export class PzUserDto {
 
 // 更新用户 DTO
 export class PzUserUpdateDto extends PzUserDto {
-  @ApiPropertyOptional({ description: '状态 0禁用 1正常' })
+  @ApiPropertyOptional({ description: '状态', enum: UserStatus })
   @IsOptional()
-  @IsIn([0, 1])
-  status?: number
+  @IsEnum(UserStatus)
+  status?: UserStatus
 }
