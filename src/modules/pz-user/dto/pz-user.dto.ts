@@ -18,6 +18,24 @@ export class WechatLoginDto {
   @IsOptional()
   @IsString()
   iv?: string
+
+  @ApiPropertyOptional({ description: '新用户默认昵称' })
+  @IsOptional()
+  @IsString()
+  defaultNickname?: string
+}
+
+// 小程序用户更新资料 DTO
+export class PzUserUpdateProfileDto {
+  @ApiPropertyOptional({ description: '昵称' })
+  @IsOptional()
+  @IsString()
+  nickname?: string
+
+  @ApiPropertyOptional({ description: '头像 URL' })
+  @IsOptional()
+  @IsString()
+  avatar?: string
 }
 
 // 查询 DTO

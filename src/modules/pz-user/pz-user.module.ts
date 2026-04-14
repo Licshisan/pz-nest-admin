@@ -4,14 +4,16 @@ import { ConfigModule, ConfigService } from '@nestjs/config'
 import { JwtModule } from '@nestjs/jwt'
 import { TypeOrmModule } from '@nestjs/typeorm'
 
+import { MiniappAuthGuard } from '~/common/decorators/miniapp-auth.guard'
 import { ConfigKeyPaths, ISecurityConfig } from '~/config'
 import { isDev } from '~/global/env'
 
+import { UploadModule } from '../tools/upload/upload.module'
 import { PzUserController } from './pz-user.controller'
 import { PzUserEntity } from './pz-user.entity'
 import { PzUserService } from './pz-user.service'
 
-const providers = [PzUserService]
+const providers = [PzUserService, MiniappAuthGuard]
 
 @Module({
   imports: [
@@ -33,6 +35,7 @@ const providers = [PzUserService]
       },
       inject: [ConfigService],
     }),
+    UploadModule,
   ],
   controllers: [PzUserController],
   providers: [...providers],

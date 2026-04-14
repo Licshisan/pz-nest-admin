@@ -1,16 +1,17 @@
 import { HttpService } from '@nestjs/axios'
 import { Inject, Injectable } from '@nestjs/common'
+import { JwtService } from '@nestjs/jwt'
 import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm'
 import { isEmpty, isNil } from 'lodash'
-import { EntityManager, Like, Repository } from 'typeorm'
 
+import { EntityManager, Like, Repository } from 'typeorm'
 import { BusinessException } from '~/common/exceptions/biz.exception'
-import { ISecurityConfig, IWechatConfig, SecurityConfig, WechatConfig } from '~/config'
+import { IWechatConfig, WechatConfig } from '~/config'
 import { ErrorEnum } from '~/constants/error-code.constant'
 import { paginate } from '~/helper/paginate'
-import { Pagination } from '~/helper/paginate/pagination'
 
-import { PzUserDto, PzUserQueryDto, PzUserUpdateDto } from './dto/pz-user.dto'
+import { Pagination } from '~/helper/paginate/pagination'
+import { PzUserDto, PzUserQueryDto, PzUserUpdateDto, PzUserUpdateProfileDto } from './dto/pz-user.dto'
 import { PzUserEntity, UserStatus } from './pz-user.entity'
 
 @Injectable()
@@ -20,47 +21,63 @@ export class PzUserService {
     private readonly pzUserRepository: Repository<PzUserEntity>,
     @InjectEntityManager() private entityManager: EntityManager,
     private http: HttpService,
-    @Inject(SecurityConfig.KEY) private securityConfig: ISecurityConfig,
+    private jwtService: JwtService,
     @Inject(WechatConfig.KEY) private wechatConfig: IWechatConfig,
   ) {}
 
   /**
-   * 微信登录 - 创建或更新用户
-   * 返回用户信息和是否新用户
+   * 微信登录 - 创建或更新用户，返回用户信息和 JWT token
    */
-  async wechatLogin(dto: { code: string }, userInfo?: { nickname?: string, avatar?: string }): Promise<PzUserEntity> {
+  async wechatLogin(dto: { code: string, defaultNickname?: string }): Promise<{ user: PzUserEntity, token: string }> {
     // 通过 code 获取 openid
     const { openid } = await this.code2Session(dto.code)
 
     let user = await this.findUserByOpenid(openid)
 
     if (isEmpty(user)) {
-      // 新用户，创建用户
+      // 新用户，使用默认昵称创建
       user = await this.entityManager.transaction(async (manager) => {
         const newUser = manager.create(PzUserEntity, {
           openid,
-          nickname: userInfo?.nickname,
-          avatar: userInfo?.avatar,
+          nickname: dto.defaultNickname || '微信用户',
+          avatar: undefined,
           status: UserStatus.ACTIVE,
         })
 
         return manager.save(newUser)
       })
-
-      return user
     }
-
-    // 老用户，更新用户信息
-    if (userInfo) {
+    else {
+      // 老用户，仅更新最后登录时间（不覆盖用户已设置的昵称/头像）
       await this.pzUserRepository.update(user.id, {
-        nickname: userInfo.nickname,
-        avatar: userInfo.avatar,
         lastLoginTime: new Date(),
       })
       user = await this.info(user.id)
     }
 
-    return user
+    const payload = { uid: user.id, type: 'miniapp', pv: 1 }
+    const token = this.jwtService.sign(payload)
+
+    return { user, token }
+  }
+
+  /**
+   * 更新小程序用户资料（昵称、头像）
+   */
+  async updateProfile(uid: number, dto: PzUserUpdateProfileDto): Promise<PzUserEntity> {
+    const user = await this.info(uid)
+
+    const updates: Partial<PzUserEntity> = {}
+    if (dto.nickname !== undefined)
+      updates.nickname = dto.nickname
+    if (dto.avatar !== undefined)
+      updates.avatar = dto.avatar
+
+    if (!isEmpty(updates)) {
+      await this.pzUserRepository.update(user.id, updates)
+    }
+
+    return this.info(user.id)
   }
 
   /**

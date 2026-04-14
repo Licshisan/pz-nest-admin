@@ -7,7 +7,7 @@ import { IdParam } from '~/common/decorators/id-param.decorator'
 import { definePermission, Perm } from '../auth/decorators/permission.decorator'
 
 import { Public } from '../auth/decorators/public.decorator'
-import { PzBookingCreateDto, PzBookingQueryDto, PzBookingSubmitDto, PzBookingUpdateStatusDto } from './dto/pz-booking.dto'
+import { PzBookingCancelDto, PzBookingCreateDto, PzBookingQueryDto, PzBookingSubmitDto, PzBookingUpdateStatusDto } from './dto/pz-booking.dto'
 import { BookingStatus, PzBookingEntity } from './pz-booking.entity'
 import { PzBookingService } from './pz-booking.service'
 
@@ -48,6 +48,14 @@ export class PzBookingController {
   @Public()
   async submit(@Body() dto: PzBookingSubmitDto) {
     return this.pzBookingService.submit(dto)
+  }
+
+  @Post('cancel/:id')
+  @ApiOperation({ summary: '取消订单（小程序专用）' })
+  @Public()
+  async cancel(@Param('id') id: number, @Body() dto: PzBookingCancelDto, @Req() req?) {
+    const userId = req?.user?.id || 1
+    await this.pzBookingService.cancel(id, dto, userId)
   }
 
   // 管理端
