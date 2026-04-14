@@ -73,9 +73,9 @@ export class PzBookingCreateDto {
   @IsEnum(ServiceType)
   serviceType: ServiceType
 
-  @ApiPropertyOptional({ description: '服务类别（固定服务/日间服务/夜间服务/自定义）' })
+  @ApiPropertyOptional({ description: '服务名称' })
   @IsString()
-  serviceCategory: string
+  serviceName: string
 
   @ApiPropertyOptional({ description: '服务时长（小时）1/2/4/8' })
   @IsOptional()
@@ -153,9 +153,9 @@ export class PzBookingSubmitDto {
   @IsEnum(ServiceType)
   serviceType: ServiceType
 
-  @ApiPropertyOptional({ description: '服务类别（固定服务/日间服务/夜间服务/自定义）' })
+  @ApiPropertyOptional({ description: '服务名称' })
   @IsString()
-  serviceCategory: string
+  serviceName: string
 
   @ApiPropertyOptional({ description: '服务时长（小时）1/2/4/8' })
   @IsOptional()

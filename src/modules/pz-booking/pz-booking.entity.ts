@@ -22,9 +22,9 @@ export enum BookingStatus {
 
 // 服务类型枚举
 export enum ServiceType {
-  FULL_ACCOMPANY = 'FULL_ACCOMPANY', // 全程陪诊
-  ERRAND = 'ERRAND', // 代办跑腿
-  GUIDANCE = 'GUIDANCE', // 就医指导
+  DAY_SERVICE = 'DAY_SERVICE', // 日间服务
+  FIXED_SERVICE = 'FIXED_SERVICE', // 固定服务
+  NIGHT_SERVICE = 'NIGHT_SERVICE', // 夜间服务
 }
 
 @Entity({ name: 'pz_booking' })
@@ -53,11 +53,11 @@ export class PzBookingEntity extends CommonEntity {
   @Column({ length: 20, nullable: true, name: 'patient_id_card', comment: '就诊人身份证' })
   patientIdCard: string
 
-  @Column({ type: 'enum', enum: ServiceType, name: 'service_type', comment: '服务类型' })
+  @Column({ type: 'enum', enum: ServiceType, name: 'service_type', comment: '服务类型（固定服务/日间服务/夜间服务）' })
   serviceType: ServiceType
 
-  @Column({ length: 32, name: 'service_category', comment: '服务类别（固定服务/日间服务/夜间服务/自定义）' })
-  serviceCategory: string
+  @Column({ length: 32, name: 'service_name', comment: '服务名称（一对一/院内服务/跑腿服务）' })
+  serviceName: string
 
   @Column({ type: 'int', name: 'duration', nullable: true, comment: '服务时长（小时）1/2/4/8' })
   duration: number

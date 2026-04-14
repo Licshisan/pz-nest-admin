@@ -67,8 +67,9 @@ export class PzUserQueryDto {
 // 新增用户 DTO
 export class PzUserDto {
   @ApiPropertyOptional({ description: '微信openid' })
+  @IsOptional()
   @IsString()
-  openid: string
+  openid?: string
 
   @ApiPropertyOptional({ description: '微信unionid' })
   @IsOptional()
