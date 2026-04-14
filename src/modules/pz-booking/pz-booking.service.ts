@@ -9,7 +9,6 @@ import { paginate } from '~/helper/paginate'
 import { Pagination } from '~/helper/paginate/pagination'
 
 import { PzAdvisorService } from '../pz-advisor/pz-advisor.service'
-import { PzUserService } from '../pz-user/pz-user.service'
 import { PzBookingCancelDto, PzBookingCreateDto, PzBookingQueryDto, PzBookingSubmitDto, PzBookingUpdateStatusDto } from './dto/pz-booking.dto'
 import { BookingStatus, PzBookingEntity, ServicePeriod, ServiceType } from './pz-booking.entity'
 
@@ -20,7 +19,6 @@ export class PzBookingService {
     private readonly pzBookingRepository: Repository<PzBookingEntity>,
     @InjectEntityManager() private entityManager: EntityManager,
     private pzAdvisorService: PzAdvisorService,
-    private pzUserService: PzUserService,
   ) {}
 
   /**
@@ -50,13 +48,16 @@ export class PzBookingService {
   /**
    * 根据订单号查询订单详情
    */
-  async findByOrderNo(orderNo: string): Promise<PzBookingEntity> {
+  async findByOrderNo(orderNo: string, uid?: number): Promise<PzBookingEntity> {
     const booking = await this.pzBookingRepository.findOne({
       where: { orderNo },
       relations: ['user', 'advisor'],
     })
 
     if (isEmpty(booking))
+      throw new BusinessException(ErrorEnum.USER_NOT_FOUND)
+
+    if (uid && booking.userId !== uid)
       throw new BusinessException(ErrorEnum.USER_NOT_FOUND)
 
     return booking
@@ -171,16 +172,13 @@ export class PzBookingService {
   /**
    * 小程序提交陪诊订单
    */
-  async submit(dto: PzBookingSubmitDto) {
-    // 验证用户存在
-    await this.pzUserService.info(dto.userId)
-
+  async submit(uid: number, dto: PzBookingSubmitDto) {
     const price = this.calculatePrice(dto.serviceType, dto.servicePeriod, dto.duration)
 
     const booking = await this.entityManager.transaction(async (manager) => {
       const newBooking = manager.create(PzBookingEntity, {
         orderNo: this.generateOrderNo(),
-        userId: dto.userId,
+        userId: uid,
         advisorId: dto.advisorId,
         patientName: dto.patientName,
         patientGender: dto.patientGender,

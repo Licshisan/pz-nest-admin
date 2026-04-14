@@ -3,10 +3,10 @@ import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger'
 
 import { ApiResult } from '~/common/decorators/api-result.decorator'
 import { IdParam } from '~/common/decorators/id-param.decorator'
+import { MiniappAuth } from '~/common/decorators/miniapp-auth.decorator'
+import { MiniappUser } from '~/common/decorators/miniapp-user.decorator'
 
 import { definePermission, Perm } from '../auth/decorators/permission.decorator'
-
-import { Public } from '../auth/decorators/public.decorator'
 import { PzAdvisorDto, PzAdvisorQueryDto, PzAdvisorUpdateDto } from './dto/pz-advisor.dto'
 import { PzAdvisorEntity } from './pz-advisor.entity'
 import { PzAdvisorService } from './pz-advisor.service'
@@ -28,16 +28,16 @@ export class PzAdvisorController {
   @Get('available')
   @ApiOperation({ summary: '获取可预约的陪诊师列表' })
   @ApiResult({ type: [PzAdvisorEntity] })
-  @Public()
-  async getAvailable() {
+  @MiniappAuth()
+  async getAvailable(@MiniappUser() _uid: number) {
     return this.pzAdvisorService.getAvailableAdvisors()
   }
 
   @Get('info/:id')
   @ApiOperation({ summary: '小程序 - 查询陪诊师详情' })
   @ApiResult({ type: PzAdvisorEntity })
-  @Public()
-  async info(@IdParam() id: number) {
+  @MiniappAuth()
+  async info(@MiniappUser() _uid: number, @IdParam() id: number) {
     return this.pzAdvisorService.info(id)
   }
 

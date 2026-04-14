@@ -1,12 +1,12 @@
-import { Body, Controller, Delete, Get, Param, ParseArrayPipe, Post, Put, Query, Req } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, ParseArrayPipe, Post, Put, Query } from '@nestjs/common'
 import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger'
 
 import { ApiResult } from '~/common/decorators/api-result.decorator'
 import { IdParam } from '~/common/decorators/id-param.decorator'
+import { MiniappAuth } from '~/common/decorators/miniapp-auth.decorator'
+import { MiniappUser } from '~/common/decorators/miniapp-user.decorator'
 
 import { definePermission, Perm } from '../auth/decorators/permission.decorator'
-
-import { Public } from '../auth/decorators/public.decorator'
 import { PzBookingCancelDto, PzBookingCreateDto, PzBookingQueryDto, PzBookingSubmitDto, PzBookingUpdateStatusDto } from './dto/pz-booking.dto'
 import { BookingStatus, PzBookingEntity } from './pz-booking.entity'
 import { PzBookingService } from './pz-booking.service'
@@ -28,34 +28,39 @@ export class PzBookingController {
   @Get('my')
   @ApiOperation({ summary: '获取我的订单列表' })
   @ApiResult({ type: [PzBookingEntity] })
-  @Public()
-  async getMyBookings(@Query('status') status?: BookingStatus, @Req() req?) {
-    const userId = req?.user?.id || 1 // TODO: 从JWT获取用户ID
-    return this.pzBookingService.getUserBookings(userId, status)
+  @MiniappAuth()
+  async getMyBookings(
+    @MiniappUser() uid: number,
+    @Query('status') status?: BookingStatus,
+  ) {
+    return this.pzBookingService.getUserBookings(uid, status)
   }
 
   @Get('order-no/:orderNo')
   @ApiOperation({ summary: '根据订单号查询订单详情（小程序专用）' })
   @ApiResult({ type: PzBookingEntity })
-  @Public()
-  async findByOrderNo(@Param('orderNo') orderNo: string) {
-    return this.pzBookingService.findByOrderNo(orderNo)
+  @MiniappAuth()
+  async findByOrderNo(@MiniappUser() uid: number, @Param('orderNo') orderNo: string) {
+    return this.pzBookingService.findByOrderNo(orderNo, uid)
   }
 
   @Post('submit')
   @ApiOperation({ summary: '提交陪诊订单' })
   @ApiResult({ type: PzBookingEntity })
-  @Public()
-  async submit(@Body() dto: PzBookingSubmitDto) {
-    return this.pzBookingService.submit(dto)
+  @MiniappAuth()
+  async submit(@MiniappUser() uid: number, @Body() dto: PzBookingSubmitDto) {
+    return this.pzBookingService.submit(uid, dto)
   }
 
   @Post('cancel/:id')
   @ApiOperation({ summary: '取消订单（小程序专用）' })
-  @Public()
-  async cancel(@Param('id') id: number, @Body() dto: PzBookingCancelDto, @Req() req?) {
-    const userId = req?.user?.id || 1
-    await this.pzBookingService.cancel(id, dto, userId)
+  @MiniappAuth()
+  async cancel(
+    @MiniappUser() uid: number,
+    @Param('id') id: number,
+    @Body() dto: PzBookingCancelDto,
+  ) {
+    await this.pzBookingService.cancel(id, dto, uid)
   }
 
   // 管理端
@@ -79,9 +84,8 @@ export class PzBookingController {
   @ApiOperation({ summary: '新增订单' })
   @ApiResult({ type: PzBookingEntity })
   @Perm(permissions.CREATE)
-  async create(@Body() dto: PzBookingCreateDto, @Req() req?) {
-    const userId = req?.user?.id || 1 // TODO: 从JWT获取用户ID
-    return this.pzBookingService.create(userId, dto)
+  async create(@Body() dto: PzBookingCreateDto) {
+    return this.pzBookingService.create(null, dto)
   }
 
   @Put(':id/status')

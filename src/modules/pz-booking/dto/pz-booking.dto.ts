@@ -121,10 +121,6 @@ export class PzBookingCancelDto {
 
 // 小程序提交陪诊订单 DTO
 export class PzBookingSubmitDto {
-  @ApiPropertyOptional({ description: '用户ID（小程序登录后获得）' })
-  @IsNumber()
-  userId: number
-
   @ApiPropertyOptional({ description: '陪诊师ID' })
   @IsNumber()
   advisorId: number
