@@ -1,13 +1,11 @@
 import type { ExecutionContext } from '@nestjs/common'
 import { Injectable, UnauthorizedException } from '@nestjs/common'
-import { Reflector } from '@nestjs/core'
 import { JwtService } from '@nestjs/jwt'
 import { InjectRepository } from '@nestjs/typeorm'
 import { FastifyRequest } from 'fastify'
 import { isEmpty } from 'lodash'
 import { Repository } from 'typeorm'
 
-import { PUBLIC_KEY } from '~/modules/auth/auth.constant'
 import { PzUserEntity, UserStatus } from '~/modules/pz-user/pz-user.entity'
 
 export const MINIAPP_USER_KEY = 'miniapp_user'
@@ -15,21 +13,12 @@ export const MINIAPP_USER_KEY = 'miniapp_user'
 @Injectable()
 export class MiniappAuthGuard {
   constructor(
-    private reflector: Reflector,
     private jwtService: JwtService,
     @InjectRepository(PzUserEntity)
     private readonly pzUserRepository: Repository<PzUserEntity>,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    // 跳过 @Public() 标记的路由（配合全局 Guard 使用的安全出口）
-    const isPublic = this.reflector.getAllAndOverride<boolean>(PUBLIC_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ])
-    if (isPublic)
-      return true
-
     const request = context.switchToHttp().getRequest<FastifyRequest>()
     const token = this.extractBearerToken(request.headers.authorization)
 

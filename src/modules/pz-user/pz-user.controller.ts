@@ -91,12 +91,7 @@ export class PzUserController {
     const file = await req.file()
 
     try {
-      const path = await this.uploadService.saveFile(file, uid)
-      const user = await this.pzUserService.updateProfile(uid, { avatar: path })
-      return {
-        id: user.id,
-        avatar: user.avatar,
-      }
+      return await this.uploadService.saveFile(file, uid)
     }
     catch (error) {
       throw new BadRequestException('头像上传失败')

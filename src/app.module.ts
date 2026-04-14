@@ -10,6 +10,7 @@ import { ClsModule } from 'nestjs-cls'
 import config from '~/config'
 import { SharedModule } from '~/shared/shared.module'
 
+import { MiniappAuthModule } from './common/decorators/miniapp-auth.module'
 import { AllExceptionsFilter } from './common/filters/any-exception.filter'
 
 import { IdempotenceInterceptor } from './common/interceptors/idempotence.interceptor'
@@ -62,6 +63,7 @@ import { SocketModule } from './socket/socket.module'
     DatabaseModule,
 
     AuthModule,
+    MiniappAuthModule,
     SystemModule,
     TasksModule.forRoot(),
     ToolsModule,
