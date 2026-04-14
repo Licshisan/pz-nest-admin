@@ -27,15 +27,6 @@ export enum ServiceType {
   GUIDANCE = 'GUIDANCE', // 就医指导
 }
 
-// 服务时段枚举
-export enum ServicePeriod {
-  MORNING = 'MORNING', // 上午
-  AFTERNOON = 'AFTERNOON', // 下午
-  EVENING = 'EVENING', // 晚上
-  NIGHT_AM = 'NIGHT_AM', // 夜间上午
-  NIGHT_PM = 'NIGHT_PM', // 夜间下午
-}
-
 @Entity({ name: 'pz_booking' })
 export class PzBookingEntity extends CommonEntity {
   @Column({ unique: true, length: 32, comment: '订单编号' })
@@ -65,8 +56,8 @@ export class PzBookingEntity extends CommonEntity {
   @Column({ type: 'enum', enum: ServiceType, name: 'service_type', comment: '服务类型' })
   serviceType: ServiceType
 
-  @Column({ type: 'enum', enum: ServicePeriod, name: 'service_period', comment: '服务时段' })
-  servicePeriod: ServicePeriod
+  @Column({ length: 32, name: 'service_category', comment: '服务类别（固定服务/日间服务/夜间服务/自定义）' })
+  serviceCategory: string
 
   @Column({ type: 'int', name: 'duration', nullable: true, comment: '服务时长（小时）1/2/4/8' })
   duration: number

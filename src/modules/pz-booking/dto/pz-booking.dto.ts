@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger'
 import { IsDateString, IsEnum, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator'
 
-import { BookingStatus, PatientGender, ServicePeriod, ServiceType } from '../pz-booking.entity'
+import { BookingStatus, PatientGender, ServiceType } from '../pz-booking.entity'
 
 // 查询 DTO
 export class PzBookingQueryDto {
@@ -73,9 +73,9 @@ export class PzBookingCreateDto {
   @IsEnum(ServiceType)
   serviceType: ServiceType
 
-  @ApiPropertyOptional({ description: '服务时段', enum: ServicePeriod })
-  @IsEnum(ServicePeriod)
-  servicePeriod: ServicePeriod
+  @ApiPropertyOptional({ description: '服务类别（固定服务/日间服务/夜间服务/自定义）' })
+  @IsString()
+  serviceCategory: string
 
   @ApiPropertyOptional({ description: '服务时长（小时）1/2/4/8' })
   @IsOptional()
@@ -153,9 +153,9 @@ export class PzBookingSubmitDto {
   @IsEnum(ServiceType)
   serviceType: ServiceType
 
-  @ApiPropertyOptional({ description: '服务时段', enum: ServicePeriod })
-  @IsEnum(ServicePeriod)
-  servicePeriod: ServicePeriod
+  @ApiPropertyOptional({ description: '服务类别（固定服务/日间服务/夜间服务/自定义）' })
+  @IsString()
+  serviceCategory: string
 
   @ApiPropertyOptional({ description: '服务时长（小时）1/2/4/8' })
   @IsOptional()

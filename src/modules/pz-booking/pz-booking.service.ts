@@ -10,7 +10,7 @@ import { Pagination } from '~/helper/paginate/pagination'
 
 import { PzAdvisorService } from '../pz-advisor/pz-advisor.service'
 import { PzBookingCancelDto, PzBookingCreateDto, PzBookingQueryDto, PzBookingSubmitDto, PzBookingUpdateStatusDto } from './dto/pz-booking.dto'
-import { BookingStatus, PzBookingEntity, ServicePeriod, ServiceType } from './pz-booking.entity'
+import { BookingStatus, PzBookingEntity, ServiceType } from './pz-booking.entity'
 
 @Injectable()
 export class PzBookingService {
@@ -103,43 +103,48 @@ export class PzBookingService {
   }
 
   /**
-   * 根据服务类型、时段、时长计算价格
+   * 根据服务类型、服务类别、时长计算价格
    */
-  private calculatePrice(serviceType: ServiceType, servicePeriod: ServicePeriod, duration?: number): number {
-    const isNight = servicePeriod === ServicePeriod.NIGHT_AM || servicePeriod === ServicePeriod.NIGHT_PM
-    const isMorningOrAfternoon = servicePeriod === ServicePeriod.MORNING || servicePeriod === ServicePeriod.AFTERNOON
-
-    // 绿色通道（固定）
-    if (serviceType === ServiceType.GUIDANCE) {
-      return 500
-    }
-
-    // 代办跑腿/院内服务（固定）
-    if (serviceType === ServiceType.ERRAND) {
-      return 88
-    }
-
-    // 全程陪诊
-    if (serviceType === ServiceType.FULL_ACCOMPANY) {
-      // 加时服务
-      if (duration === 1) {
-        return isNight ? 150 : 70
-      }
-      // 夜间陪诊
-      if (isNight) {
-        if (duration === 2)
-          return 356
-        if (duration === 4)
-          return 576
-      }
-      // 日间陪诊
-      if (isMorningOrAfternoon) {
+  private calculatePrice(serviceType: ServiceType, serviceCategory: string, duration?: number): number {
+    // 固定服务
+    if (serviceCategory === '固定服务') {
+      if (serviceType === ServiceType.GUIDANCE)
+        return 500
+      if (serviceType === ServiceType.ERRAND)
+        return 88
+      if (serviceType === ServiceType.FULL_ACCOMPANY) {
+        if (duration === 1)
+          return 70
         if (duration === 2)
           return 178
         if (duration === 4)
           return 288
         if (duration === 8)
           return 520
+      }
+    }
+
+    // 日间服务
+    if (serviceCategory === '日间服务') {
+      if (serviceType === ServiceType.FULL_ACCOMPANY) {
+        if (duration === 1)
+          return 70
+        if (duration === 2)
+          return 178
+        if (duration === 4)
+          return 288
+        if (duration === 8)
+          return 520
+      }
+    }
+
+    // 夜间服务
+    if (serviceCategory === '夜间服务') {
+      if (serviceType === ServiceType.FULL_ACCOMPANY) {
+        if (duration === 2)
+          return 356
+        if (duration === 4)
+          return 576
       }
     }
 
@@ -151,7 +156,7 @@ export class PzBookingService {
    * 创建订单
    */
   async create(userId: number, dto: PzBookingCreateDto): Promise<PzBookingEntity> {
-    const price = this.calculatePrice(dto.serviceType, dto.servicePeriod, dto.duration)
+    const price = this.calculatePrice(dto.serviceType, dto.serviceCategory, dto.duration)
 
     const booking = await this.entityManager.transaction(async (manager) => {
       const newBooking = manager.create(PzBookingEntity, {
@@ -173,7 +178,7 @@ export class PzBookingService {
    * 小程序提交陪诊订单
    */
   async submit(uid: number, dto: PzBookingSubmitDto) {
-    const price = this.calculatePrice(dto.serviceType, dto.servicePeriod, dto.duration)
+    const price = this.calculatePrice(dto.serviceType, dto.serviceCategory, dto.duration)
 
     const booking = await this.entityManager.transaction(async (manager) => {
       const newBooking = manager.create(PzBookingEntity, {
@@ -186,7 +191,7 @@ export class PzBookingService {
         patientPhone: dto.patientPhone,
         patientIdCard: dto.patientIdCard,
         serviceType: dto.serviceType,
-        servicePeriod: dto.servicePeriod,
+        serviceCategory: dto.serviceCategory,
         duration: dto.duration,
         serviceDate: new Date(dto.serviceDate),
         serviceTime: dto.serviceTime,
