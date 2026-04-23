@@ -4,7 +4,6 @@ import { JwtModule } from '@nestjs/jwt'
 import { TypeOrmModule } from '@nestjs/typeorm'
 
 import { ConfigKeyPaths, ISecurityConfig } from '~/config'
-import { isDev } from '~/global/env'
 
 import { PzUserEntity } from '~/modules/pz-user/pz-user.entity'
 import { MiniappAuthGuard } from './miniapp-auth.guard'
@@ -16,11 +15,11 @@ import { MiniappAuthGuard } from './miniapp-auth.guard'
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService<ConfigKeyPaths>) => {
-        const { jwtSecret, jwtExprire } = configService.get<ISecurityConfig>('security')
+        const { jwtSecret } = configService.get<ISecurityConfig>('security')
         return {
           secret: jwtSecret,
-          signOptions: { expiresIn: `${jwtExprire}s` },
-          ignoreExpiration: isDev,
+          signOptions: { expiresIn: '30d' }, // 小程序 token 设置30天过期
+          ignoreExpiration: false, // 生产环境也检查过期时间
         }
       },
       inject: [ConfigService],

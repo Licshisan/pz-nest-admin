@@ -45,7 +45,10 @@ export class PzAdvisorDto {
   @IsString()
   title?: string
 
-  @ApiPropertyOptional({ description: '个人简介' })
+  @ApiPropertyOptional({
+    description: '个人介绍（支持富文本格式，如 HTML、Markdown 等）',
+    example: '<p><strong>专业陪诊师</strong>，拥有5年医院陪诊经验，擅长：</p><ul><li>内科疾病陪诊</li><li>手术前后陪护</li><li>老年患者照护</li></ul>',
+  })
   @IsOptional()
   @IsString()
   intro?: string

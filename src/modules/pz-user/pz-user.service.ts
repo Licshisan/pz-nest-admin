@@ -31,7 +31,6 @@ export class PzUserService {
   async wechatLogin(dto: { code: string, defaultNickname?: string }): Promise<{ user: PzUserEntity, token: string }> {
     // 通过 code 获取 openid
     const { openid } = await this.code2Session(dto.code)
-
     let user = await this.findUserByOpenid(openid)
 
     if (isEmpty(user)) {
@@ -86,10 +85,7 @@ export class PzUserService {
   async findUserByOpenid(openid: string): Promise<PzUserEntity | undefined> {
     return this.pzUserRepository
       .createQueryBuilder('user')
-      .where({
-        openid,
-        status: UserStatus.ACTIVE,
-      })
+      .where({ openid })
       .getOne()
   }
 

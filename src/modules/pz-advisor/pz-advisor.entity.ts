@@ -24,7 +24,7 @@ export class PzAdvisorEntity extends CommonEntity {
   @Column({ nullable: true, length: 32, comment: '职称（如：金牌陪诊师）' })
   title: string
 
-  @Column({ type: 'text', nullable: true, comment: '个人简介' })
+  @Column({ type: 'longtext', nullable: true, comment: '个人介绍（支持富文本）' })
   intro: string
 
   @Column({ type: 'json', nullable: true, comment: '标签数组，如["亲和力强","耐心"]' })
