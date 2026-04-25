@@ -52,11 +52,7 @@ async function bootstrap() {
   })
 
   app.setGlobalPrefix(globalPrefix)
-  app.useStaticAssets({
-    root: path.join(__dirname, '..', 'public'),
-    prefix: `/${globalPrefix}/`,
-    prefixAvoidTrailingSlash: true,
-  })
+  app.useStaticAssets({ root: path.join(__dirname, '..', 'public') })
   // Starts listening for shutdown hooks
   !isDev && app.enableShutdownHooks()
 

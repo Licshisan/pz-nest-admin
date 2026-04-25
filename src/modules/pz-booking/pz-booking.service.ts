@@ -9,8 +9,9 @@ import { paginate } from '~/helper/paginate'
 import { Pagination } from '~/helper/paginate/pagination'
 
 import { PzAdvisorService } from '../pz-advisor/pz-advisor.service'
+import { PzServiceItemEntity } from '../pz-service-item/pz-service-item.entity'
 import { PzBookingCancelDto, PzBookingCreateDto, PzBookingQueryDto, PzBookingSubmitDto, PzBookingUpdateStatusDto } from './dto/pz-booking.dto'
-import { BookingStatus, PzBookingEntity, ServiceType } from './pz-booking.entity'
+import { BookingStatus, PzBookingEntity } from './pz-booking.entity'
 
 @Injectable()
 export class PzBookingService {
@@ -103,64 +104,20 @@ export class PzBookingService {
   }
 
   /**
-   * 根据服务类型、服务类别、时长计算价格
-   */
-  private calculatePrice(serviceType: ServiceType, serviceName: string, duration?: number): number {
-    // 日间服务
-    if (serviceType === ServiceType.DAY_SERVICE) {
-      if (serviceName === '一对一') {
-        if (duration === 2) {
-          return 178
-        }
-        if (duration === 4) {
-          return 288
-        }
-        if (duration === 8) {
-          return 520
-        }
-      }
-      if (serviceName === '加时1小时') {
-        return 70
-      }
-    }
-
-    // 固定服务
-    if (serviceType === ServiceType.FIXED_SERVICE) {
-      if (serviceName === '院内服务') {
-        return 88
-      }
-      if (serviceName === '跑腿服务') {
-        return 88
-      }
-      if (serviceName === '住院咨询') {
-        return 500
-      }
-    }
-
-    // 夜间服务
-    if (serviceType === ServiceType.NIGHT_SERVICE) {
-      if (serviceName === '一对一') {
-        if (duration === 2)
-          return 356
-        if (duration === 4)
-          return 576
-      }
-      if (serviceName === '加时1小时') {
-        return 70
-      }
-    }
-  }
-
-  /**
    * 创建订单
    */
   async create(userId: number, dto: PzBookingCreateDto): Promise<PzBookingEntity> {
-    const price = this.calculatePrice(dto.serviceType, dto.serviceName, dto.duration)
+    // 获取服务项价格
+    const price = await this.getPzServiceItemPrice(dto.serviceItemId)
 
     const booking = await this.entityManager.transaction(async (manager) => {
       const newBooking = manager.create(PzBookingEntity, {
         orderNo: this.generateOrderNo(),
         userId,
+        serviceItemId: dto.serviceItemId,
+        serviceType: dto.serviceType || '',
+        serviceName: dto.serviceName || '',
+        duration: dto.duration,
         ...dto,
         serviceDate: new Date(dto.serviceDate),
         price,
@@ -177,21 +134,23 @@ export class PzBookingService {
    * 小程序提交陪诊订单
    */
   async submit(uid: number, dto: PzBookingSubmitDto) {
-    const price = this.calculatePrice(dto.serviceType, dto.serviceName, dto.duration)
+    // 获取服务项价格
+    const price = await this.getPzServiceItemPrice(dto.serviceItemId)
 
     const booking = await this.entityManager.transaction(async (manager) => {
       const newBooking = manager.create(PzBookingEntity, {
         orderNo: this.generateOrderNo(),
         userId: uid,
+        serviceItemId: dto.serviceItemId,
+        serviceType: dto.serviceType || '',
+        serviceName: dto.serviceName || '',
+        duration: dto.duration,
         advisorId: dto.advisorId,
         patientName: dto.patientName,
         patientGender: dto.patientGender,
         patientAge: dto.patientAge,
         patientPhone: dto.patientPhone,
         patientIdCard: dto.patientIdCard,
-        serviceType: dto.serviceType,
-        serviceName: dto.serviceName,
-        duration: dto.duration,
         serviceDate: new Date(dto.serviceDate),
         serviceTime: dto.serviceTime,
         serviceAddress: dto.serviceAddress,
@@ -285,5 +244,21 @@ export class PzBookingService {
    */
   async delete(ids: number[]): Promise<void> {
     await this.pzBookingRepository.delete(ids)
+  }
+
+  /**
+   * 获取服务项价格
+   */
+  private async getPzServiceItemPrice(serviceItemId: number): Promise<number> {
+    const serviceItem = await this.entityManager.findOne(PzServiceItemEntity, {
+      where: { id: serviceItemId, status: 1 },
+      select: ['price'],
+    })
+
+    if (!serviceItem) {
+      throw new BusinessException('服务项不存在或已下架')
+    }
+
+    return serviceItem.price
   }
 }

@@ -2,6 +2,7 @@ import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm'
 import { CommonEntity } from '~/common/entity/common.entity'
 
 import { PzAdvisorEntity } from '../pz-advisor/pz-advisor.entity'
+import { PzServiceItemEntity } from '../pz-service-item/pz-service-item.entity'
 import { PzUserEntity } from '../pz-user/pz-user.entity'
 
 // 就诊人性别枚举
@@ -18,13 +19,6 @@ export enum BookingStatus {
   COMPLETED = 'COMPLETED', // 已完成
   CANCELLED = 'CANCELLED', // 已取消
   REFUNDED = 'REFUNDED', // 已退款
-}
-
-// 服务类型枚举
-export enum ServiceType {
-  DAY_SERVICE = 'DAY_SERVICE', // 日间服务
-  FIXED_SERVICE = 'FIXED_SERVICE', // 固定服务
-  NIGHT_SERVICE = 'NIGHT_SERVICE', // 夜间服务
 }
 
 @Entity({ name: 'pz_booking' })
@@ -52,15 +46,6 @@ export class PzBookingEntity extends CommonEntity {
 
   @Column({ length: 20, nullable: true, name: 'patient_id_card', comment: '就诊人身份证' })
   patientIdCard: string
-
-  @Column({ type: 'enum', enum: ServiceType, name: 'service_type', comment: '服务类型（固定服务/日间服务/夜间服务）' })
-  serviceType: ServiceType
-
-  @Column({ length: 32, name: 'service_name', comment: '服务名称（一对一/院内服务/跑腿服务）' })
-  serviceName: string
-
-  @Column({ type: 'int', name: 'duration', nullable: true, comment: '服务时长（小时）1/2/4/8' })
-  duration: number
 
   @Column({ type: 'date', name: 'service_date', comment: '服务日期' })
   serviceDate: Date
@@ -103,4 +88,8 @@ export class PzBookingEntity extends CommonEntity {
   @ManyToOne(() => PzAdvisorEntity, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'advisor_id' })
   advisor: PzAdvisorEntity
+
+  @ManyToOne(() => PzServiceItemEntity, { onDelete: 'SET NULL', nullable: true })
+  @JoinColumn({ name: 'service_item_id' })
+  serviceItem: PzServiceItemEntity | null
 }

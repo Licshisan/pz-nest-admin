@@ -39,15 +39,6 @@ export class PzAdvisorEntity extends CommonEntity {
   @Column({ type: 'int', default: 0, comment: '服务次数' })
   serviceCount: number
 
-  @Column({ type: 'json', nullable: true, comment: '擅长科室，如["骨科","眼科"]' })
-  specialties: string[]
-
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 299.0, comment: '半天价格' })
-  priceHalf: number
-
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 499.0, comment: '全天价格' })
-  priceFull: number
-
   @Column({ type: 'enum', enum: AdvisorStatus, default: AdvisorStatus.ON_DUTY, comment: '状态' })
   status: AdvisorStatus
 

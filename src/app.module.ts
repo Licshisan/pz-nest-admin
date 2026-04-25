@@ -24,6 +24,7 @@ import { NetdiskModule } from './modules/netdisk/netdisk.module'
 import { PzAdvisorModule } from './modules/pz-advisor/pz-advisor.module'
 import { PzBookingModule } from './modules/pz-booking/pz-booking.module'
 import { PzReviewModule } from './modules/pz-review/pz-review.module'
+import { PzServiceItemModule } from './modules/pz-service-item/pz-service-item.module'
 import { PzUserModule } from './modules/pz-user/pz-user.module'
 
 import { SseModule } from './modules/sse/sse.module'
@@ -75,6 +76,7 @@ import { SocketModule } from './socket/socket.module'
     // biz
     PzUserModule,
     PzAdvisorModule,
+    PzServiceItemModule,
     PzBookingModule,
     PzReviewModule,
     // end biz
