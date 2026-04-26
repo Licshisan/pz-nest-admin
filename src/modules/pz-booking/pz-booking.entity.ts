@@ -53,7 +53,7 @@ export class PzBookingEntity extends CommonEntity {
   @Column({ length: 32, name: 'service_time', comment: '服务时间点' })
   serviceTime: string
 
-  @Column({ length: 255, name: 'service_address', comment: '就诊地址' })
+  @Column({ length: 255, name: 'service_address', comment: '服务地址' })
   serviceAddress: string
 
   @Column({ type: 'text', nullable: true, comment: '陪诊需求描述' })

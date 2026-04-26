@@ -1,43 +1,8 @@
 import { ApiPropertyOptional } from '@nestjs/swagger'
 import { IsDateString, IsInt, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator'
 
+import { PagerDto } from '~/common/dto/pager.dto'
 import { BookingStatus, PatientGender } from '../pz-booking.entity'
-
-// 查询 DTO
-export class PzBookingQueryDto {
-  @ApiPropertyOptional({ description: '页码' })
-  @IsOptional()
-  page: number
-
-  @ApiPropertyOptional({ description: '每页数量' })
-  @IsOptional()
-  pageSize: number
-
-  @ApiPropertyOptional({ description: '用户ID' })
-  @IsOptional()
-  @IsNumber()
-  userId?: number
-
-  @ApiPropertyOptional({ description: '陪诊师ID' })
-  @IsOptional()
-  @IsNumber()
-  advisorId?: number
-
-  @ApiPropertyOptional({ description: '订单状态', enum: BookingStatus })
-  @IsOptional()
-  @IsString()
-  status?: BookingStatus
-
-  @ApiPropertyOptional({ description: '服务日期开始' })
-  @IsOptional()
-  @IsDateString()
-  serviceDateFrom?: string
-
-  @ApiPropertyOptional({ description: '服务日期结束' })
-  @IsOptional()
-  @IsDateString()
-  serviceDateTo?: string
-}
 
 // 创建订单 DTO
 export class PzBookingCreateDto {
@@ -107,6 +72,34 @@ export class PzBookingCreateDto {
   requirement?: string
 }
 
+// 查询 DTO
+export class PzBookingQueryDto extends PagerDto<PzBookingCreateDto> {
+  @ApiPropertyOptional({ description: '用户ID' })
+  @IsOptional()
+  @IsNumber()
+  userId?: number
+
+  @ApiPropertyOptional({ description: '陪诊师ID' })
+  @IsOptional()
+  @IsNumber()
+  advisorId?: number
+
+  @ApiPropertyOptional({ description: '订单状态', enum: BookingStatus })
+  @IsOptional()
+  @IsString()
+  status?: BookingStatus
+
+  @ApiPropertyOptional({ description: '服务日期开始' })
+  @IsOptional()
+  @IsDateString()
+  serviceDateFrom?: string
+
+  @ApiPropertyOptional({ description: '服务日期结束' })
+  @IsOptional()
+  @IsDateString()
+  serviceDateTo?: string
+}
+
 // 更新订单状态 DTO
 export class PzBookingUpdateStatusDto {
   @ApiPropertyOptional({ description: '订单状态', enum: BookingStatus })
@@ -117,13 +110,6 @@ export class PzBookingUpdateStatusDto {
   @IsOptional()
   @IsString()
   cancelReason?: string
-}
-
-// 取消订单 DTO
-export class PzBookingCancelDto {
-  @ApiPropertyOptional({ description: '取消原因' })
-  @IsString()
-  cancelReason: string
 }
 
 // 小程序提交陪诊订单 DTO
@@ -159,21 +145,6 @@ export class PzBookingSubmitDto {
   @IsOptional()
   @IsString()
   patientIdCard?: string
-
-  @ApiPropertyOptional({ description: '服务类型（冗余记录）', required: false })
-  @IsOptional()
-  @IsString()
-  serviceType?: string
-
-  @ApiPropertyOptional({ description: '服务名称（冗余记录）', required: false })
-  @IsOptional()
-  @IsString()
-  serviceName?: string
-
-  @ApiPropertyOptional({ description: '服务时长（小时）1/2/4/8（冗余记录）', required: false })
-  @IsOptional()
-  @IsInt()
-  duration?: number
 
   @ApiPropertyOptional({ description: '服务日期' })
   @IsDateString()

@@ -25,57 +25,6 @@ export class PzReviewService {
   ) {}
 
   /**
-   * 获取评价详情
-   */
-  async info(id: number): Promise<PzReviewEntity> {
-    const review = await this.pzReviewRepository.findOneBy({ id })
-
-    if (isEmpty(review))
-      throw new BusinessException(ErrorEnum.USER_NOT_FOUND)
-
-    return review
-  }
-
-  /**
-   * 获取评价列表
-   */
-  async list(dto: PzReviewQueryDto): Promise<Pagination<PzReviewEntity>> {
-    const { page, pageSize, advisorId, userId } = dto
-
-    const queryBuilder = this.pzReviewRepository
-      .createQueryBuilder('review')
-      .leftJoinAndSelect('review.user', 'user')
-      .where({
-        ...(advisorId ? { advisorId } : null),
-        ...(userId ? { userId } : null),
-      })
-      .orderBy('review.createdAt', 'DESC')
-
-    return paginate<PzReviewEntity>(queryBuilder, {
-      page,
-      pageSize,
-    })
-  }
-
-  /**
-   * 获取陪诊师的所有评价
-   */
-  async getAdvisorReviews(advisorId: number): Promise<PzReviewEntity[]> {
-    return this.pzReviewRepository.find({
-      where: { advisorId },
-      relations: ['user'],
-      order: { createdAt: 'DESC' },
-    })
-  }
-
-  /**
-   * 获取订单的评价
-   */
-  async getBookingReview(bookingId: number): Promise<PzReviewEntity | undefined> {
-    return this.pzReviewRepository.findOneBy({ bookingId })
-  }
-
-  /**
    * 创建评价
    */
   async create(userId: number, dto: PzReviewDto): Promise<PzReviewEntity> {
@@ -112,9 +61,59 @@ export class PzReviewService {
 
       // 更新陪诊师评分
       await this.pzAdvisorService.updateRating(booking.advisorId, dto.rating)
-
       return savedReview
     })
+
+    return review
+  }
+
+  /**
+   * 获取陪诊师的所有评价
+   */
+  async getAdvisorReviews(advisorId: number): Promise<PzReviewEntity[]> {
+    return this.pzReviewRepository.find({
+      where: { advisorId },
+      relations: ['user'],
+      order: { createdAt: 'DESC' },
+    })
+  }
+
+  /**
+   * 获取订单的评价
+   */
+  async getBookingReview(bookingId: number): Promise<PzReviewEntity | undefined> {
+    return this.pzReviewRepository.findOneBy({ bookingId })
+  }
+
+  /**
+   * 获取评价列表
+   */
+  async list(dto: PzReviewQueryDto): Promise<Pagination<PzReviewEntity>> {
+    const { page, pageSize, advisorId, userId } = dto
+
+    const queryBuilder = this.pzReviewRepository
+      .createQueryBuilder('review')
+      .leftJoinAndSelect('review.user', 'user')
+      .where({
+        ...(advisorId ? { advisorId } : null),
+        ...(userId ? { userId } : null),
+      })
+      .orderBy('review.createdAt', 'DESC')
+
+    return paginate<PzReviewEntity>(queryBuilder, {
+      page,
+      pageSize,
+    })
+  }
+
+  /**
+   * 获取评价详情
+   */
+  async info(id: number): Promise<PzReviewEntity> {
+    const review = await this.pzReviewRepository.findOneBy({ id })
+
+    if (isEmpty(review))
+      throw new BusinessException(ErrorEnum.USER_NOT_FOUND)
 
     return review
   }

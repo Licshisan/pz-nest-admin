@@ -8,8 +8,8 @@ import { EntityManager, Like, Repository } from 'typeorm'
 import { BusinessException } from '~/common/exceptions/biz.exception'
 import { IWechatConfig, WechatConfig } from '~/config'
 import { ErrorEnum } from '~/constants/error-code.constant'
-import { paginate } from '~/helper/paginate'
 
+import { paginate } from '~/helper/paginate'
 import { Pagination } from '~/helper/paginate/pagination'
 import { PzUserDto, PzUserQueryDto, PzUserUpdateDto, PzUserUpdateProfileDto } from './dto/pz-user.dto'
 import { PzUserEntity, UserStatus } from './pz-user.entity'
@@ -31,7 +31,11 @@ export class PzUserService {
   async wechatLogin(dto: { code: string, defaultNickname?: string }): Promise<{ user: PzUserEntity, token: string }> {
     // 通过 code 获取 openid
     const { openid } = await this.code2Session(dto.code)
-    let user = await this.findUserByOpenid(openid)
+
+    let user = await this.pzUserRepository
+      .createQueryBuilder('user')
+      .where({ openid })
+      .getOne()
 
     if (isEmpty(user)) {
       // 新用户，使用默认昵称创建
@@ -77,23 +81,6 @@ export class PzUserService {
     }
 
     return this.info(user.id)
-  }
-
-  /**
-   * 根据OpenID查找微信用户
-   */
-  async findUserByOpenid(openid: string): Promise<PzUserEntity | undefined> {
-    return this.pzUserRepository
-      .createQueryBuilder('user')
-      .where({ openid })
-      .getOne()
-  }
-
-  /**
-   * 根据ID查找用户
-   */
-  async findUserById(id: number): Promise<PzUserEntity | undefined> {
-    return this.pzUserRepository.findOneBy({ id })
   }
 
   /**

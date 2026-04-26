@@ -1,6 +1,7 @@
-import { ApiPropertyOptional } from '@nestjs/swagger'
+import { ApiPropertyOptional, PartialType } from '@nestjs/swagger'
 import { IsEnum, IsOptional, IsString } from 'class-validator'
 
+import { PagerDto } from '~/common/dto/pager.dto'
 import { UserGender, UserStatus } from '../pz-user.entity'
 
 // 微信登录 DTO
@@ -36,32 +37,6 @@ export class PzUserUpdateProfileDto {
   @IsOptional()
   @IsString()
   avatar?: string
-}
-
-// 查询 DTO
-export class PzUserQueryDto {
-  @ApiPropertyOptional({ description: '页码' })
-  @IsOptional()
-  page: number
-
-  @ApiPropertyOptional({ description: '每页数量' })
-  @IsOptional()
-  pageSize: number
-
-  @ApiPropertyOptional({ description: '微信昵称' })
-  @IsOptional()
-  @IsString()
-  nickname?: string
-
-  @ApiPropertyOptional({ description: '手机号' })
-  @IsOptional()
-  @IsString()
-  phone?: string
-
-  @ApiPropertyOptional({ description: '状态', enum: UserStatus })
-  @IsOptional()
-  @IsEnum(UserStatus)
-  status?: UserStatus
 }
 
 // 新增用户 DTO
@@ -109,12 +84,30 @@ export class PzUserDto {
   @IsOptional()
   @IsString()
   idCard?: string
-}
 
-// 更新用户 DTO
-export class PzUserUpdateDto extends PzUserDto {
   @ApiPropertyOptional({ description: '状态', enum: UserStatus })
   @IsOptional()
   @IsEnum(UserStatus)
   status?: UserStatus
 }
+
+// 查询 DTO
+export class PzUserQueryDto extends PagerDto<PzUserDto> {
+  @ApiPropertyOptional({ description: '微信昵称' })
+  @IsOptional()
+  @IsString()
+  nickname?: string
+
+  @ApiPropertyOptional({ description: '手机号' })
+  @IsOptional()
+  @IsString()
+  phone?: string
+
+  @ApiPropertyOptional({ description: '状态', enum: UserStatus })
+  @IsOptional()
+  @IsEnum(UserStatus)
+  status?: UserStatus
+}
+
+// 更新用户 DTO
+export class PzUserUpdateDto extends PartialType(PzUserDto) {}

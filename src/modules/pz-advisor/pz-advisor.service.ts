@@ -9,7 +9,7 @@ import { paginate } from '~/helper/paginate'
 import { Pagination } from '~/helper/paginate/pagination'
 
 import { PzAdvisorDto, PzAdvisorQueryDto, PzAdvisorUpdateDto } from './dto/pz-advisor.dto'
-import { AdvisorStatus, AdvisorVerified, PzAdvisorEntity } from './pz-advisor.entity'
+import { AdvisorStatus, PzAdvisorEntity } from './pz-advisor.entity'
 
 @Injectable()
 export class PzAdvisorService {
@@ -18,6 +18,21 @@ export class PzAdvisorService {
     private readonly pzAdvisorRepository: Repository<PzAdvisorEntity>,
     @InjectEntityManager() private entityManager: EntityManager,
   ) {}
+
+  /**
+   * 获取可预约的陪诊师列表
+   */
+  async getAvailableAdvisors(): Promise<PzAdvisorEntity[]> {
+    return this.pzAdvisorRepository.find({
+      where: {
+        status: AdvisorStatus.ON_DUTY,
+      },
+      order: {
+        rate: 'DESC',
+        serviceCount: 'DESC',
+      },
+    })
+  }
 
   /**
    * 获取陪诊师详情
@@ -35,14 +50,13 @@ export class PzAdvisorService {
    * 获取陪诊师列表（可预约的）
    */
   async list(dto: PzAdvisorQueryDto): Promise<Pagination<PzAdvisorEntity>> {
-    const { page, pageSize, name, status, isVerified } = dto
+    const { page, pageSize, name, status } = dto
 
     const queryBuilder = this.pzAdvisorRepository
       .createQueryBuilder('advisor')
       .where({
         ...(name ? { name: Like(`%${name}%`) } : null),
         ...(!isNil(status) ? { status } : null),
-        ...(!isNil(isVerified) ? { isVerified } : null),
       })
       .orderBy('advisor.rate', 'DESC')
       .addOrderBy('advisor.serviceCount', 'DESC')
@@ -54,30 +68,13 @@ export class PzAdvisorService {
   }
 
   /**
-   * 获取可预约的陪诊师列表
-   */
-  async getAvailableAdvisors(): Promise<PzAdvisorEntity[]> {
-    return this.pzAdvisorRepository.find({
-      where: {
-        status: AdvisorStatus.ON_DUTY,
-        isVerified: AdvisorVerified.VERIFIED,
-      },
-      order: {
-        rate: 'DESC',
-        serviceCount: 'DESC',
-      },
-    })
-  }
-
-  /**
    * 创建陪诊师
    */
   async create(dto: PzAdvisorDto): Promise<void> {
     await this.entityManager.transaction(async (manager) => {
       const advisor = manager.create(PzAdvisorEntity, {
         ...dto,
-        status: AdvisorStatus.ON_DUTY,
-        isVerified: AdvisorVerified.PENDING,
+        status: AdvisorStatus.OFF_DUTY,
         rate: 5.0,
         serviceCount: 0,
       })

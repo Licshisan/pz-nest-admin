@@ -7,7 +7,7 @@ import { MiniappAuth } from '~/common/decorators/miniapp-auth.decorator'
 import { MiniappUser } from '~/common/decorators/miniapp-user.decorator'
 
 import { definePermission, Perm } from '../auth/decorators/permission.decorator'
-import { PzBookingCancelDto, PzBookingCreateDto, PzBookingQueryDto, PzBookingSubmitDto, PzBookingUpdateStatusDto } from './dto/pz-booking.dto'
+import { PzBookingCreateDto, PzBookingQueryDto, PzBookingSubmitDto, PzBookingUpdateStatusDto } from './dto/pz-booking.dto'
 import { BookingStatus, PzBookingEntity } from './pz-booking.entity'
 import { PzBookingService } from './pz-booking.service'
 
@@ -24,7 +24,7 @@ export const permissions = definePermission('peizhen:booking', {
 export class PzBookingController {
   constructor(private pzBookingService: PzBookingService) {}
 
-  // 小程序接口
+  // 微信小程序接口
   @Get('my')
   @ApiOperation({ summary: '获取我的订单列表' })
   @ApiResult({ type: [PzBookingEntity] })
@@ -58,7 +58,7 @@ export class PzBookingController {
   async cancel(
     @MiniappUser() uid: number,
     @Param('id') id: number,
-    @Body() dto: PzBookingCancelDto,
+    @Body() dto: PzBookingUpdateStatusDto,
   ) {
     await this.pzBookingService.cancel(id, dto, uid)
   }

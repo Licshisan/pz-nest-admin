@@ -5,7 +5,7 @@ import { ApiResult } from '~/common/decorators/api-result.decorator'
 import { IdParam } from '~/common/decorators/id-param.decorator'
 import { MiniappAuth } from '~/common/decorators/miniapp-auth.decorator'
 import { definePermission, Perm } from '../auth/decorators/permission.decorator'
-import { PzServiceItemCreateDto, PzServiceItemQueryDto, ServiceType } from './dto/pz-service-item.dto'
+import { PzServiceItemCreateDto, PzServiceItemQueryDto } from './dto/pz-service-item.dto'
 import { PzServiceItemEntity } from './pz-service-item.entity'
 import { PzServiceItemService } from './pz-service-item.service'
 
@@ -22,14 +22,16 @@ export const permissions = definePermission('peizhen:service-item', {
 export class PzServiceItemController {
   constructor(private pzServiceItemService: PzServiceItemService) {}
 
+  // 小程序接口
   @Get('public')
   @ApiOperation({ summary: '获取公开服务列表（小程序使用）' })
   @ApiResult({ type: [PzServiceItemEntity] })
   @MiniappAuth()
-  async findAll(@Query('serviceType') serviceType?: ServiceType) {
-    return this.pzServiceItemService.findAll(serviceType)
+  async findAll() {
+    return this.pzServiceItemService.findAll()
   }
 
+  // 管理后台接口
   @Get()
   @ApiOperation({ summary: '获取服务项列表' })
   @ApiResult({ type: [PzServiceItemEntity], isPage: true })
@@ -51,7 +53,6 @@ export class PzServiceItemController {
   @ApiResult({ type: PzServiceItemEntity })
   @Perm(permissions.CREATE)
   async create(@Body() dto: PzServiceItemCreateDto) {
-    console.log('Received create request with data:', dto)
     return await this.pzServiceItemService.create(dto)
   }
 
@@ -61,7 +62,6 @@ export class PzServiceItemController {
   @Perm(permissions.UPDATE)
   async update(@IdParam() id: number, @Body() dto: PzServiceItemCreateDto) {
     await this.pzServiceItemService.update(id, dto)
-    return this.pzServiceItemService.findOne(id)
   }
 
   @Delete(':id')

@@ -7,7 +7,7 @@ import { BusinessException } from '~/common/exceptions/biz.exception'
 import { paginate } from '~/helper/paginate'
 import { Pagination } from '~/helper/paginate/pagination'
 
-import { PzServiceItemCreateDto, PzServiceItemQueryDto, ServiceType } from './dto/pz-service-item.dto'
+import { PzServiceItemCreateDto, PzServiceItemQueryDto } from './dto/pz-service-item.dto'
 import { PzServiceItemEntity } from './pz-service-item.entity'
 
 @Injectable()
@@ -16,6 +16,19 @@ export class PzServiceItemService {
     @InjectRepository(PzServiceItemEntity)
     private readonly pzServiceItemRepository: Repository<PzServiceItemEntity>,
   ) {}
+
+  /**
+   * 获取所有启用的服务项
+   */
+  async findAll(): Promise<PzServiceItemEntity[]> {
+    const queryBuilder = this.pzServiceItemRepository
+      .createQueryBuilder('item')
+      .where({ status: 1 })
+      .orderBy('item.sort', 'ASC')
+      .addOrderBy('item.id', 'ASC')
+
+    return queryBuilder.getMany()
+  }
 
   /**
    * 获取服务项详情
@@ -52,27 +65,9 @@ export class PzServiceItemService {
   }
 
   /**
-   * 获取所有启用的服务项
-   */
-  async findAll(serviceType?: ServiceType): Promise<PzServiceItemEntity[]> {
-    const queryBuilder = this.pzServiceItemRepository
-      .createQueryBuilder('item')
-      .where({ status: 1 })
-      .orderBy('item.sort', 'ASC')
-      .addOrderBy('item.id', 'ASC')
-
-    if (serviceType) {
-      queryBuilder.andWhere({ serviceType })
-    }
-
-    return queryBuilder.getMany()
-  }
-
-  /**
    * 创建服务项
    */
   async create(dto: PzServiceItemCreateDto): Promise<void> {
-    console.log('Creating service item with data:', dto)
     await this.pzServiceItemRepository.insert({
       ...dto,
     })

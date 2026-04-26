@@ -10,7 +10,7 @@ import { Pagination } from '~/helper/paginate/pagination'
 
 import { PzAdvisorService } from '../pz-advisor/pz-advisor.service'
 import { PzServiceItemEntity } from '../pz-service-item/pz-service-item.entity'
-import { PzBookingCancelDto, PzBookingCreateDto, PzBookingQueryDto, PzBookingSubmitDto, PzBookingUpdateStatusDto } from './dto/pz-booking.dto'
+import { PzBookingCreateDto, PzBookingQueryDto, PzBookingSubmitDto, PzBookingUpdateStatusDto } from './dto/pz-booking.dto'
 import { BookingStatus, PzBookingEntity } from './pz-booking.entity'
 
 @Injectable()
@@ -21,6 +21,93 @@ export class PzBookingService {
     @InjectEntityManager() private entityManager: EntityManager,
     private pzAdvisorService: PzAdvisorService,
   ) {}
+
+  /**
+   * 获取用户的订单列表
+   */
+  async getUserBookings(userId: number, status?: BookingStatus): Promise<PzBookingEntity[]> {
+    return this.pzBookingRepository.find({
+      where: {
+        userId,
+        ...(!isNil(status) ? { status } : null),
+      },
+      relations: ['advisor'],
+      order: { createdAt: 'DESC' },
+    })
+  }
+
+  /**
+   * 根据订单号查询订单详情
+   */
+  async findByOrderNo(orderNo: string, uid?: number): Promise<PzBookingEntity> {
+    const booking = await this.pzBookingRepository.findOne({
+      where: { orderNo },
+      relations: ['user', 'advisor'],
+    })
+
+    if (isEmpty(booking))
+      throw new BusinessException(ErrorEnum.USER_NOT_FOUND)
+
+    if (uid && booking.userId !== uid)
+      throw new BusinessException(ErrorEnum.USER_NOT_FOUND)
+
+    return booking
+  }
+
+  /**
+   * 小程序提交陪诊订单
+   */
+  async submit(uid: number, dto: PzBookingSubmitDto) {
+    // 获取服务项价格
+    const price = await this.getPzServiceItemPrice(dto.serviceItemId)
+
+    const booking = await this.entityManager.transaction(async (manager) => {
+      const newBooking = manager.create(PzBookingEntity, {
+        orderNo: this.generateOrderNo(),
+        userId: uid,
+        serviceItemId: dto.serviceItemId,
+        advisorId: dto.advisorId,
+        patientName: dto.patientName,
+        patientGender: dto.patientGender,
+        patientAge: dto.patientAge,
+        patientPhone: dto.patientPhone,
+        patientIdCard: dto.patientIdCard,
+        serviceDate: new Date(dto.serviceDate),
+        serviceTime: dto.serviceTime,
+        serviceAddress: dto.serviceAddress,
+        requirement: dto.requirement,
+        price,
+        status: BookingStatus.PENDING_PAY,
+      })
+
+      return manager.save(newBooking)
+    })
+
+    return booking
+  }
+
+  /**
+   * 取消订单
+   */
+  async cancel(id: number, dto: PzBookingUpdateStatusDto, userId: number): Promise<void> {
+    const booking = await this.info(id)
+
+    // 验证是否是订单所有者
+    if (booking.userId !== userId) {
+      throw new BusinessException(ErrorEnum.USER_NOT_FOUND)
+    }
+
+    // 只有待支付和待接单状态可以取消
+    if (booking.status !== BookingStatus.PENDING_PAY && booking.status !== BookingStatus.PENDING_ACCEPT) {
+      throw new BusinessException('该订单状态不允许取消')
+    }
+
+    await this.pzBookingRepository.update(id, {
+      status: BookingStatus.CANCELLED,
+      cancelReason: dto.cancelReason,
+      cancelTime: new Date(),
+    })
+  }
 
   /**
    * 生成订单编号
@@ -41,24 +128,6 @@ export class PzBookingService {
     })
 
     if (isEmpty(booking))
-      throw new BusinessException(ErrorEnum.USER_NOT_FOUND)
-
-    return booking
-  }
-
-  /**
-   * 根据订单号查询订单详情
-   */
-  async findByOrderNo(orderNo: string, uid?: number): Promise<PzBookingEntity> {
-    const booking = await this.pzBookingRepository.findOne({
-      where: { orderNo },
-      relations: ['user', 'advisor'],
-    })
-
-    if (isEmpty(booking))
-      throw new BusinessException(ErrorEnum.USER_NOT_FOUND)
-
-    if (uid && booking.userId !== uid)
       throw new BusinessException(ErrorEnum.USER_NOT_FOUND)
 
     return booking
@@ -90,20 +159,6 @@ export class PzBookingService {
   }
 
   /**
-   * 获取用户的订单列表
-   */
-  async getUserBookings(userId: number, status?: BookingStatus): Promise<PzBookingEntity[]> {
-    return this.pzBookingRepository.find({
-      where: {
-        userId,
-        ...(!isNil(status) ? { status } : null),
-      },
-      relations: ['advisor'],
-      order: { createdAt: 'DESC' },
-    })
-  }
-
-  /**
    * 创建订单
    */
   async create(userId: number, dto: PzBookingCreateDto): Promise<PzBookingEntity> {
@@ -120,41 +175,6 @@ export class PzBookingService {
         duration: dto.duration,
         ...dto,
         serviceDate: new Date(dto.serviceDate),
-        price,
-        status: BookingStatus.PENDING_PAY,
-      })
-
-      return manager.save(newBooking)
-    })
-
-    return booking
-  }
-
-  /**
-   * 小程序提交陪诊订单
-   */
-  async submit(uid: number, dto: PzBookingSubmitDto) {
-    // 获取服务项价格
-    const price = await this.getPzServiceItemPrice(dto.serviceItemId)
-
-    const booking = await this.entityManager.transaction(async (manager) => {
-      const newBooking = manager.create(PzBookingEntity, {
-        orderNo: this.generateOrderNo(),
-        userId: uid,
-        serviceItemId: dto.serviceItemId,
-        serviceType: dto.serviceType || '',
-        serviceName: dto.serviceName || '',
-        duration: dto.duration,
-        advisorId: dto.advisorId,
-        patientName: dto.patientName,
-        patientGender: dto.patientGender,
-        patientAge: dto.patientAge,
-        patientPhone: dto.patientPhone,
-        patientIdCard: dto.patientIdCard,
-        serviceDate: new Date(dto.serviceDate),
-        serviceTime: dto.serviceTime,
-        serviceAddress: dto.serviceAddress,
-        requirement: dto.requirement,
         price,
         status: BookingStatus.PENDING_PAY,
       })
@@ -192,29 +212,6 @@ export class PzBookingService {
       }
 
       await manager.update(PzBookingEntity, id, updateData)
-    })
-  }
-
-  /**
-   * 取消订单
-   */
-  async cancel(id: number, dto: PzBookingCancelDto, userId: number): Promise<void> {
-    const booking = await this.info(id)
-
-    // 验证是否是订单所有者
-    if (booking.userId !== userId) {
-      throw new BusinessException(ErrorEnum.USER_NOT_FOUND)
-    }
-
-    // 只有待支付和待接单状态可以取消
-    if (booking.status !== BookingStatus.PENDING_PAY && booking.status !== BookingStatus.PENDING_ACCEPT) {
-      throw new BusinessException('该订单状态不允许取消')
-    }
-
-    await this.pzBookingRepository.update(id, {
-      status: BookingStatus.CANCELLED,
-      cancelReason: dto.cancelReason,
-      cancelTime: new Date(),
     })
   }
 

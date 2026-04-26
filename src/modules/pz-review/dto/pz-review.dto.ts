@@ -1,26 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger'
 import { IsArray, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator'
-
-// 查询 DTO
-export class PzReviewQueryDto {
-  @ApiPropertyOptional({ description: '页码' })
-  @IsOptional()
-  page: number
-
-  @ApiPropertyOptional({ description: '每页数量' })
-  @IsOptional()
-  pageSize: number
-
-  @ApiPropertyOptional({ description: '陪诊师ID' })
-  @IsOptional()
-  @IsNumber()
-  advisorId?: number
-
-  @ApiPropertyOptional({ description: '用户ID' })
-  @IsOptional()
-  @IsNumber()
-  userId?: number
-}
+import { PagerDto } from '~/common/dto/pager.dto'
 
 // 创建 DTO
 export class PzReviewDto {
@@ -43,4 +23,17 @@ export class PzReviewDto {
   @IsOptional()
   @IsArray()
   tags?: string[]
+}
+
+// 查询 DTO
+export class PzReviewQueryDto extends PagerDto<PzReviewDto> {
+  @ApiPropertyOptional({ description: '陪诊师ID' })
+  @IsOptional()
+  @IsNumber()
+  advisorId?: number
+
+  @ApiPropertyOptional({ description: '用户ID' })
+  @IsOptional()
+  @IsNumber()
+  userId?: number
 }

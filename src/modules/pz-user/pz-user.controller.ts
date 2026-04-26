@@ -30,10 +30,7 @@ export class PzUserController {
     private uploadService: UploadService,
   ) {}
 
-  // ========================
-  // 小程序接口
-  // ========================
-
+  // 小程序端接口
   @Post('wechat-login')
   @ApiOperation({ summary: '微信小程序登录' })
   @ApiResult({ type: PzUserEntity })
@@ -52,10 +49,7 @@ export class PzUserController {
   @Put('profile')
   @ApiOperation({ summary: '更新小程序用户资料（昵称、头像）' })
   @MiniappAuth()
-  async updateProfile(
-    @MiniappUser() uid: number,
-    @Body() dto: PzUserUpdateProfileDto,
-  ) {
+  async updateProfile(@MiniappUser() uid: number, @Body() dto: PzUserUpdateProfileDto) {
     const user = await this.pzUserService.updateProfile(uid, dto)
     return {
       id: user.id,
@@ -98,9 +92,7 @@ export class PzUserController {
     }
   }
 
-  // ========================
   // 管理端接口
-  // ========================
   @Get()
   @ApiOperation({ summary: '获取微信用户列表' })
   @ApiResult({ type: [PzUserEntity], isPage: true })
