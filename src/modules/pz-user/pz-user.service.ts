@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios'
-import { Inject, Injectable } from '@nestjs/common'
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm'
 import { isEmpty, isNil } from 'lodash'
@@ -49,6 +49,9 @@ export class PzUserService {
 
         return manager.save(newUser)
       })
+    }
+    else if (user.status === UserStatus.DISABLED) {
+      throw new UnauthorizedException('您的账号已被封禁，请联系管理员')
     }
     else {
       // 老用户，仅更新最后登录时间（不覆盖用户已设置的昵称/头像）

@@ -8,7 +8,7 @@ import { MiniappUser } from '~/common/decorators/miniapp-user.decorator'
 
 import { definePermission, Perm } from '../auth/decorators/permission.decorator'
 import { PzBookingCreateDto, PzBookingQueryDto, PzBookingSubmitDto, PzBookingUpdateStatusDto } from './dto/pz-booking.dto'
-import { BookingStatus, PzBookingEntity } from './pz-booking.entity'
+import { BookingStatus, PayStatus, PzBookingEntity } from './pz-booking.entity'
 import { PzBookingService } from './pz-booking.service'
 
 export const permissions = definePermission('peizhen:booking', {
@@ -32,8 +32,9 @@ export class PzBookingController {
   async getMyBookings(
     @MiniappUser() uid: number,
     @Query('status') status?: BookingStatus,
+    @Query('payStatus') payStatus?: PayStatus,
   ) {
-    return this.pzBookingService.getUserBookings(uid, status)
+    return this.pzBookingService.getUserBookings(uid, status, payStatus)
   }
 
   @Get('order-no/:orderNo')

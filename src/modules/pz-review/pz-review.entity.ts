@@ -1,12 +1,13 @@
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm'
+import { Column, Entity, JoinColumn, ManyToOne, OneToOne } from 'typeorm'
 import { CommonEntity } from '~/common/entity/common.entity'
 
 import { PzAdvisorEntity } from '../pz-advisor/pz-advisor.entity'
+import { PzBookingEntity } from '../pz-booking/pz-booking.entity'
 import { PzUserEntity } from '../pz-user/pz-user.entity'
 
 @Entity({ name: 'pz_review' })
 export class PzReviewEntity extends CommonEntity {
-  @Column({ type: 'int', name: 'booking_id', comment: '订单ID' })
+  @Column({ type: 'int', name: 'booking_id', unique: true, comment: '订单ID' })
   bookingId: number
 
   @Column({ type: 'int', name: 'user_id', comment: '用户ID' })
@@ -25,6 +26,10 @@ export class PzReviewEntity extends CommonEntity {
   tags: string[]
 
   // 关联关系
+  @OneToOne(() => PzBookingEntity, booking => booking.review, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'booking_id' })
+  booking: PzBookingEntity
+
   @ManyToOne(() => PzUserEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: PzUserEntity

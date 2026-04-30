@@ -2,7 +2,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger'
 import { IsDateString, IsInt, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator'
 
 import { PagerDto } from '~/common/dto/pager.dto'
-import { BookingStatus, PatientGender } from '../pz-booking.entity'
+import { BookingStatus, PatientGender, PayStatus } from '../pz-booking.entity'
 
 // 创建订单 DTO
 export class PzBookingCreateDto {
@@ -88,6 +88,11 @@ export class PzBookingQueryDto extends PagerDto<PzBookingCreateDto> {
   @IsOptional()
   @IsString()
   status?: BookingStatus
+
+  @ApiPropertyOptional({ description: '支付状态', enum: PayStatus })
+  @IsOptional()
+  @IsString()
+  payStatus?: PayStatus
 
   @ApiPropertyOptional({ description: '服务日期开始' })
   @IsOptional()

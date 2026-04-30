@@ -1,7 +1,8 @@
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm'
+import { Column, Entity, JoinColumn, ManyToOne, OneToOne } from 'typeorm'
 import { CommonEntity } from '~/common/entity/common.entity'
 
 import { PzAdvisorEntity } from '../pz-advisor/pz-advisor.entity'
+import { PzReviewEntity } from '../pz-review/pz-review.entity'
 import { PzServiceItemEntity } from '../pz-service-item/pz-service-item.entity'
 import { PzUserEntity } from '../pz-user/pz-user.entity'
 
@@ -13,11 +14,16 @@ export enum PatientGender {
 
 // 订单状态枚举
 export enum BookingStatus {
-  PENDING_PAY = 'PENDING_PAY', // 待支付
-  PENDING_ACCEPT = 'PENDING_ACCEPT', // 待接单
+  PENDING_ACCEPT = 'PENDING_ACCEPT', // 待确定
   SERVICE_IN_PROGRESS = 'SERVICE_IN_PROGRESS', // 服务中
   COMPLETED = 'COMPLETED', // 已完成
   CANCELLED = 'CANCELLED', // 已取消
+}
+
+// 支付状态枚举
+export enum PayStatus {
+  UNPAID = 'UNPAID', // 待支付
+  PAID = 'PAID', // 已支付
   REFUNDED = 'REFUNDED', // 已退款
 }
 
@@ -31,6 +37,18 @@ export class PzBookingEntity extends CommonEntity {
 
   @Column({ type: 'int', name: 'advisor_id', nullable: true, comment: '陪诊师ID' })
   advisorId: number
+
+  @Column({ type: 'int', name: 'service_item_id', nullable: true, comment: '服务项ID' })
+  serviceItemId: number | null
+
+  @Column({ length: 64, nullable: true, name: 'service_type', comment: '下单时服务类型快照' })
+  serviceType: string
+
+  @Column({ length: 64, nullable: true, name: 'service_name', comment: '下单时服务名称快照' })
+  serviceName: string
+
+  @Column({ type: 'int', nullable: true, comment: '下单时服务时长快照' })
+  duration: number | null
 
   @Column({ length: 64, name: 'patient_name', comment: '就诊人姓名' })
   patientName: string
@@ -62,8 +80,11 @@ export class PzBookingEntity extends CommonEntity {
   @Column({ type: 'decimal', precision: 10, scale: 2, comment: '订单金额' })
   price: number
 
-  @Column({ type: 'enum', enum: BookingStatus, default: BookingStatus.PENDING_PAY, comment: '订单状态' })
+  @Column({ type: 'enum', enum: BookingStatus, default: BookingStatus.PENDING_ACCEPT, comment: '履约状态' })
   status: BookingStatus
+
+  @Column({ type: 'enum', enum: PayStatus, default: PayStatus.UNPAID, name: 'pay_status', comment: '支付状态' })
+  payStatus: PayStatus
 
   @Column({ nullable: true, name: 'pay_time', comment: '支付时间' })
   payTime: Date
@@ -92,4 +113,9 @@ export class PzBookingEntity extends CommonEntity {
   @ManyToOne(() => PzServiceItemEntity, { onDelete: 'SET NULL', nullable: true })
   @JoinColumn({ name: 'service_item_id' })
   serviceItem: PzServiceItemEntity | null
+
+  @OneToOne(() => PzReviewEntity, review => review.booking)
+  review: PzReviewEntity | null
+
+  hasReview?: boolean
 }

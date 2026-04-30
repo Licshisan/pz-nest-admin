@@ -82,7 +82,10 @@ export class PzReviewService {
    * 获取订单的评价
    */
   async getBookingReview(bookingId: number): Promise<PzReviewEntity | undefined> {
-    return this.pzReviewRepository.findOneBy({ bookingId })
+    return this.pzReviewRepository.findOne({
+      where: { bookingId },
+      relations: ['booking'],
+    })
   }
 
   /**
@@ -94,6 +97,7 @@ export class PzReviewService {
     const queryBuilder = this.pzReviewRepository
       .createQueryBuilder('review')
       .leftJoinAndSelect('review.user', 'user')
+      .leftJoinAndSelect('review.booking', 'booking')
       .where({
         ...(advisorId ? { advisorId } : null),
         ...(userId ? { userId } : null),
@@ -110,7 +114,10 @@ export class PzReviewService {
    * 获取评价详情
    */
   async info(id: number): Promise<PzReviewEntity> {
-    const review = await this.pzReviewRepository.findOneBy({ id })
+    const review = await this.pzReviewRepository.findOne({
+      where: { id },
+      relations: ['booking'],
+    })
 
     if (isEmpty(review))
       throw new BusinessException(ErrorEnum.USER_NOT_FOUND)

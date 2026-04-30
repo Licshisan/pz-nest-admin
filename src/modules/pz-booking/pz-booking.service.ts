@@ -11,7 +11,7 @@ import { Pagination } from '~/helper/paginate/pagination'
 import { PzAdvisorService } from '../pz-advisor/pz-advisor.service'
 import { PzServiceItemEntity } from '../pz-service-item/pz-service-item.entity'
 import { PzBookingCreateDto, PzBookingQueryDto, PzBookingSubmitDto, PzBookingUpdateStatusDto } from './dto/pz-booking.dto'
-import { BookingStatus, PzBookingEntity } from './pz-booking.entity'
+import { BookingStatus, PayStatus, PzBookingEntity } from './pz-booking.entity'
 
 @Injectable()
 export class PzBookingService {
@@ -25,15 +25,18 @@ export class PzBookingService {
   /**
    * 获取用户的订单列表
    */
-  async getUserBookings(userId: number, status?: BookingStatus): Promise<PzBookingEntity[]> {
-    return this.pzBookingRepository.find({
+  async getUserBookings(userId: number, status?: BookingStatus, payStatus?: PayStatus): Promise<PzBookingEntity[]> {
+    const bookings = await this.pzBookingRepository.find({
       where: {
         userId,
         ...(!isNil(status) ? { status } : null),
+        ...(!isNil(payStatus) ? { payStatus } : null),
       },
-      relations: ['advisor'],
+      relations: ['advisor', 'serviceItem', 'review'],
       order: { createdAt: 'DESC' },
     })
+
+    return bookings.map(booking => this.withReviewState(booking))
   }
 
   /**
@@ -42,7 +45,7 @@ export class PzBookingService {
   async findByOrderNo(orderNo: string, uid?: number): Promise<PzBookingEntity> {
     const booking = await this.pzBookingRepository.findOne({
       where: { orderNo },
-      relations: ['user', 'advisor'],
+      relations: ['user', 'advisor', 'serviceItem', 'review'],
     })
 
     if (isEmpty(booking))
@@ -51,21 +54,23 @@ export class PzBookingService {
     if (uid && booking.userId !== uid)
       throw new BusinessException(ErrorEnum.USER_NOT_FOUND)
 
-    return booking
+    return this.withReviewState(booking)
   }
 
   /**
    * 小程序提交陪诊订单
    */
   async submit(uid: number, dto: PzBookingSubmitDto) {
-    // 获取服务项价格
-    const price = await this.getPzServiceItemPrice(dto.serviceItemId)
+    const serviceItem = await this.getPzServiceItem(dto.serviceItemId)
 
     const booking = await this.entityManager.transaction(async (manager) => {
       const newBooking = manager.create(PzBookingEntity, {
         orderNo: this.generateOrderNo(),
         userId: uid,
         serviceItemId: dto.serviceItemId,
+        serviceType: serviceItem.serviceType,
+        serviceName: serviceItem.name,
+        duration: serviceItem.duration,
         advisorId: dto.advisorId,
         patientName: dto.patientName,
         patientGender: dto.patientGender,
@@ -76,14 +81,15 @@ export class PzBookingService {
         serviceTime: dto.serviceTime,
         serviceAddress: dto.serviceAddress,
         requirement: dto.requirement,
-        price,
-        status: BookingStatus.PENDING_PAY,
+        price: serviceItem.price,
+        status: BookingStatus.PENDING_ACCEPT,
+        payStatus: PayStatus.UNPAID,
       })
 
       return manager.save(newBooking)
     })
 
-    return booking
+    return this.findByOrderNo(booking.orderNo, uid)
   }
 
   /**
@@ -97,13 +103,14 @@ export class PzBookingService {
       throw new BusinessException(ErrorEnum.USER_NOT_FOUND)
     }
 
-    // 只有待支付和待接单状态可以取消
-    if (booking.status !== BookingStatus.PENDING_PAY && booking.status !== BookingStatus.PENDING_ACCEPT) {
+    // 只有待确定状态可以取消
+    if (booking.status !== BookingStatus.PENDING_ACCEPT) {
       throw new BusinessException('该订单状态不允许取消')
     }
 
     await this.pzBookingRepository.update(id, {
       status: BookingStatus.CANCELLED,
+      payStatus: booking.payStatus === PayStatus.PAID ? PayStatus.REFUNDED : booking.payStatus,
       cancelReason: dto.cancelReason,
       cancelTime: new Date(),
     })
@@ -124,65 +131,73 @@ export class PzBookingService {
   async info(id: number): Promise<PzBookingEntity> {
     const booking = await this.pzBookingRepository.findOne({
       where: { id },
-      relations: ['user', 'advisor'],
+      relations: ['user', 'advisor', 'serviceItem', 'review'],
     })
 
     if (isEmpty(booking))
       throw new BusinessException(ErrorEnum.USER_NOT_FOUND)
 
-    return booking
+    return this.withReviewState(booking)
   }
 
   /**
    * 获取订单列表
    */
   async list(dto: PzBookingQueryDto): Promise<Pagination<PzBookingEntity>> {
-    const { page, pageSize, userId, advisorId, status, serviceDateFrom, serviceDateTo } = dto
+    const { page, pageSize, userId, advisorId, status, payStatus, serviceDateFrom, serviceDateTo } = dto
 
     const queryBuilder = this.pzBookingRepository
       .createQueryBuilder('booking')
       .leftJoinAndSelect('booking.user', 'user')
       .leftJoinAndSelect('booking.advisor', 'advisor')
+      .leftJoinAndSelect('booking.serviceItem', 'serviceItem')
+      .leftJoinAndSelect('booking.review', 'review')
       .where({
         ...(userId ? { userId } : null),
         ...(advisorId ? { advisorId } : null),
         ...(!isNil(status) ? { status } : null),
+        ...(!isNil(payStatus) ? { payStatus } : null),
         ...(serviceDateFrom ? { serviceDate: MoreThanOrEqual(new Date(serviceDateFrom)) } : null),
         ...(serviceDateTo ? { serviceDate: LessThanOrEqual(new Date(serviceDateTo)) } : null),
       })
       .orderBy('booking.createdAt', 'DESC')
 
-    return paginate<PzBookingEntity>(queryBuilder, {
+    const result = await paginate<PzBookingEntity>(queryBuilder, {
       page,
       pageSize,
     })
+
+    return new Pagination(
+      result.items.map(booking => this.withReviewState(booking)),
+      result.meta,
+    )
   }
 
   /**
    * 创建订单
    */
   async create(userId: number, dto: PzBookingCreateDto): Promise<PzBookingEntity> {
-    // 获取服务项价格
-    const price = await this.getPzServiceItemPrice(dto.serviceItemId)
+    const serviceItem = await this.getPzServiceItem(dto.serviceItemId)
 
     const booking = await this.entityManager.transaction(async (manager) => {
       const newBooking = manager.create(PzBookingEntity, {
         orderNo: this.generateOrderNo(),
         userId,
-        serviceItemId: dto.serviceItemId,
-        serviceType: dto.serviceType || '',
-        serviceName: dto.serviceName || '',
-        duration: dto.duration,
         ...dto,
+        serviceItemId: dto.serviceItemId,
+        serviceType: dto.serviceType || serviceItem.serviceType,
+        serviceName: dto.serviceName || serviceItem.name,
+        duration: dto.duration ?? serviceItem.duration,
         serviceDate: new Date(dto.serviceDate),
-        price,
-        status: BookingStatus.PENDING_PAY,
+        price: serviceItem.price,
+        status: BookingStatus.PENDING_ACCEPT,
+        payStatus: PayStatus.UNPAID,
       })
 
       return manager.save(newBooking)
     })
 
-    return booking
+    return this.findByOrderNo(booking.orderNo, userId)
   }
 
   /**
@@ -215,6 +230,11 @@ export class PzBookingService {
     })
   }
 
+  private withReviewState(booking: PzBookingEntity): PzBookingEntity {
+    booking.hasReview = !!booking.review
+    return booking
+  }
+
   /**
    * 模拟支付（实际项目中需要接入微信支付）
    */
@@ -225,12 +245,12 @@ export class PzBookingService {
       throw new BusinessException(ErrorEnum.USER_NOT_FOUND)
     }
 
-    if (booking.status !== BookingStatus.PENDING_PAY) {
+    if (booking.payStatus !== PayStatus.UNPAID) {
       throw new BusinessException('该订单不是待支付状态')
     }
 
     await this.pzBookingRepository.update(id, {
-      status: BookingStatus.PENDING_ACCEPT,
+      payStatus: PayStatus.PAID,
       payTime: new Date(),
       payMethod: 'wechat',
     })
@@ -246,16 +266,16 @@ export class PzBookingService {
   /**
    * 获取服务项价格
    */
-  private async getPzServiceItemPrice(serviceItemId: number): Promise<number> {
+  private async getPzServiceItem(serviceItemId: number): Promise<PzServiceItemEntity> {
     const serviceItem = await this.entityManager.findOne(PzServiceItemEntity, {
       where: { id: serviceItemId, status: 1 },
-      select: ['price'],
+      select: ['id', 'name', 'price', 'serviceType', 'duration', 'status'],
     })
 
     if (!serviceItem) {
       throw new BusinessException('服务项不存在或已下架')
     }
 
-    return serviceItem.price
+    return serviceItem
   }
 }

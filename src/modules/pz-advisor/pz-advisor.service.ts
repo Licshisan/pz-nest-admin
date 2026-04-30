@@ -74,7 +74,7 @@ export class PzAdvisorService {
     await this.entityManager.transaction(async (manager) => {
       const advisor = manager.create(PzAdvisorEntity, {
         ...dto,
-        status: AdvisorStatus.OFF_DUTY,
+        status: AdvisorStatus.ON_DUTY,
         rate: 5.0,
         serviceCount: 0,
       })
