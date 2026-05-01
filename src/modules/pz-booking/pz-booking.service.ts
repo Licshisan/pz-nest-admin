@@ -8,6 +8,7 @@ import { ErrorEnum } from '~/constants/error-code.constant'
 import { paginate } from '~/helper/paginate'
 import { Pagination } from '~/helper/paginate/pagination'
 
+import { WechatMsgService, WX_SUBSCRIBE_TEMPLATE } from '~/shared/wechat/wechat-msg.service'
 import { PzAdvisorService } from '../pz-advisor/pz-advisor.service'
 import { PzServiceItemEntity } from '../pz-service-item/pz-service-item.entity'
 import { PzBookingCreateDto, PzBookingQueryDto, PzBookingSubmitDto, PzBookingUpdateStatusDto } from './dto/pz-booking.dto'
@@ -20,6 +21,7 @@ export class PzBookingService {
     private readonly pzBookingRepository: Repository<PzBookingEntity>,
     @InjectEntityManager() private entityManager: EntityManager,
     private pzAdvisorService: PzAdvisorService,
+    private wechatMsgService: WechatMsgService,
   ) {}
 
   /**
@@ -32,7 +34,7 @@ export class PzBookingService {
         ...(!isNil(status) ? { status } : null),
         ...(!isNil(payStatus) ? { payStatus } : null),
       },
-      relations: ['advisor', 'serviceItem', 'review'],
+      relations: ['advisor', 'review'],
       order: { createdAt: 'DESC' },
     })
 
@@ -45,7 +47,7 @@ export class PzBookingService {
   async findByOrderNo(orderNo: string, uid?: number): Promise<PzBookingEntity> {
     const booking = await this.pzBookingRepository.findOne({
       where: { orderNo },
-      relations: ['user', 'advisor', 'serviceItem', 'review'],
+      relations: ['user', 'advisor', 'review'],
     })
 
     if (isEmpty(booking))
@@ -131,7 +133,7 @@ export class PzBookingService {
   async info(id: number): Promise<PzBookingEntity> {
     const booking = await this.pzBookingRepository.findOne({
       where: { id },
-      relations: ['user', 'advisor', 'serviceItem', 'review'],
+      relations: ['user', 'advisor', 'review'],
     })
 
     if (isEmpty(booking))
@@ -150,7 +152,6 @@ export class PzBookingService {
       .createQueryBuilder('booking')
       .leftJoinAndSelect('booking.user', 'user')
       .leftJoinAndSelect('booking.advisor', 'advisor')
-      .leftJoinAndSelect('booking.serviceItem', 'serviceItem')
       .leftJoinAndSelect('booking.review', 'review')
       .where({
         ...(userId ? { userId } : null),
@@ -228,6 +229,52 @@ export class PzBookingService {
 
       await manager.update(PzBookingEntity, id, updateData)
     })
+
+    // 发送订阅消息通知用户
+    await this.sendStatusNotification(booking, dto.status)
+  }
+
+  /**
+   * 发送订单状态变更订阅消息
+   */
+  private async sendStatusNotification(
+    booking: PzBookingEntity,
+    newStatus: BookingStatus,
+  ): Promise<void> {
+    if (!booking.user?.openid)
+      return
+
+    const page = `pages/booking-detail/booking-detail?orderNo=${booking.orderNo}`
+
+    if (newStatus === BookingStatus.SERVICE_IN_PROGRESS) {
+      // 陪诊员已接单，发送接单通知
+      await this.wechatMsgService.sendSubscribeMessage({
+        openid: booking.user.openid,
+        templateId: WX_SUBSCRIBE_TEMPLATE.ORDER_ACCEPTED,
+        page,
+        data: {
+          character_string9: { value: booking.orderNo },
+          thing2: { value: booking.patientName },
+          thing7: { value: booking.serviceName || '陪诊服务' },
+          phrase4: { value: '已确认接单' },
+        },
+      })
+    }
+    else if (newStatus === BookingStatus.COMPLETED) {
+      // 服务完成，发送完成通知
+      const now = new Date()
+      const endTime = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`
+      await this.wechatMsgService.sendSubscribeMessage({
+        openid: booking.user.openid,
+        templateId: WX_SUBSCRIBE_TEMPLATE.ORDER_COMPLETED,
+        page,
+        data: {
+          name2: { value: booking.serviceName || '陪诊服务' },
+          time7: { value: endTime },
+          phrase6: { value: '服务已完成' },
+        },
+      })
+    }
   }
 
   private withReviewState(booking: PzBookingEntity): PzBookingEntity {

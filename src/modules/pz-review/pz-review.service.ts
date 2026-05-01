@@ -60,7 +60,7 @@ export class PzReviewService {
       const savedReview = await manager.save(newReview)
 
       // 更新陪诊师评分
-      await this.pzAdvisorService.updateRating(booking.advisorId, dto.rating)
+      await this.recalculateAdvisorRating(booking.advisorId, manager)
       return savedReview
     })
 
@@ -98,6 +98,7 @@ export class PzReviewService {
       .createQueryBuilder('review')
       .leftJoinAndSelect('review.user', 'user')
       .leftJoinAndSelect('review.booking', 'booking')
+      .leftJoinAndSelect('review.advisor', 'advisor')
       .where({
         ...(advisorId ? { advisorId } : null),
         ...(userId ? { userId } : null),
@@ -130,6 +131,22 @@ export class PzReviewService {
    */
   async delete(id: number): Promise<void> {
     const review = await this.info(id)
-    await this.pzReviewRepository.delete(id)
+
+    await this.entityManager.transaction(async (manager) => {
+      await manager.delete(PzReviewEntity, id)
+      await this.recalculateAdvisorRating(review.advisorId, manager)
+    })
+  }
+
+  private async recalculateAdvisorRating(advisorId: number, manager: EntityManager): Promise<void> {
+    const result = await manager
+      .getRepository(PzReviewEntity)
+      .createQueryBuilder('review')
+      .select('AVG(review.rating)', 'avgRating')
+      .where('review.advisorId = :advisorId', { advisorId })
+      .getRawOne<{ avgRating: string | null }>()
+
+    const rating = result?.avgRating ? Number(result.avgRating) : 5.0
+    await this.pzAdvisorService.updateRating(advisorId, rating, manager)
   }
 }

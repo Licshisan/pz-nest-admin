@@ -108,14 +108,14 @@ export class PzAdvisorService {
   /**
    * 更新评分
    */
-  async updateRating(id: number, rating: number): Promise<void> {
-    const advisor = await this.info(id)
-    // 计算新的平均评分
-    const newRate = (advisor.rate * advisor.serviceCount + rating) / (advisor.serviceCount + 1)
+  async updateRating(id: number, rating: number, manager?: EntityManager): Promise<void> {
+    const repo = manager ? manager.getRepository(PzAdvisorEntity) : this.pzAdvisorRepository
+    const advisor = await repo.findOneBy({ id })
+    if (isEmpty(advisor))
+      throw new BusinessException(ErrorEnum.USER_NOT_FOUND)
 
-    await this.pzAdvisorRepository.update(id, {
-      rate: Number(newRate.toFixed(1)),
-      serviceCount: advisor.serviceCount + 1,
+    await repo.update(id, {
+      rate: Number(rating.toFixed(1)),
     })
   }
 

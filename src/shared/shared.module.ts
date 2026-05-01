@@ -11,6 +11,7 @@ import { LoggerModule } from './logger/logger.module'
 import { MailerModule } from './mailer/mailer.module'
 
 import { RedisModule } from './redis/redis.module'
+import { WechatMsgModule } from './wechat/wechat-msg.module'
 
 @Global()
 @Module({
@@ -39,11 +40,13 @@ import { RedisModule } from './redis/redis.module'
     }),
     // redis
     RedisModule,
+    // wechat
+    WechatMsgModule,
     // mailer
     MailerModule,
     // helper
     HelperModule,
   ],
-  exports: [HttpModule, MailerModule, RedisModule, HelperModule],
+  exports: [HttpModule, MailerModule, RedisModule, HelperModule, WechatMsgModule],
 })
 export class SharedModule {}

@@ -3,7 +3,6 @@ import { CommonEntity } from '~/common/entity/common.entity'
 
 import { PzAdvisorEntity } from '../pz-advisor/pz-advisor.entity'
 import { PzReviewEntity } from '../pz-review/pz-review.entity'
-import { PzServiceItemEntity } from '../pz-service-item/pz-service-item.entity'
 import { PzUserEntity } from '../pz-user/pz-user.entity'
 
 // 就诊人性别枚举
@@ -109,10 +108,6 @@ export class PzBookingEntity extends CommonEntity {
   @ManyToOne(() => PzAdvisorEntity, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'advisor_id' })
   advisor: PzAdvisorEntity
-
-  @ManyToOne(() => PzServiceItemEntity, { onDelete: 'SET NULL', nullable: true })
-  @JoinColumn({ name: 'service_item_id' })
-  serviceItem: PzServiceItemEntity | null
 
   @OneToOne(() => PzReviewEntity, review => review.booking)
   review: PzReviewEntity | null
